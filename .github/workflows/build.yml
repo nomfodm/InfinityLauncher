@@ -2,8 +2,9 @@ name: Wails build
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - main
+  workflow_dispatch:
 
 env:
   NODE_OPTIONS: "--max-old-space-size=4096"
