@@ -1,0 +1,60 @@
+.main {
+  position: fixed;
+  width: 100px;
+  height: 100px;
+
+  top: 0;
+  right: 0;
+  z-index: 100;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.buttons {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  display: flex;
+  justify-content: flex-end;
+}
+
+.button {
+  width: 30px;
+  height: 20px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hide:hover {
+  background-color: rgba(26, 29, 74, 0.5);
+}
+
+.close:hover {
+  background-color: #ed4245;
+}
+
+.user {
+  width: 50px;
+  height: 50px;
+
+  background-color: rgba(30, 34, 74, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.user img {
+  border-radius: 7px;
+}
+
+.user:hover {
+  background-color: rgba(30, 34, 74, 0.5);
+}

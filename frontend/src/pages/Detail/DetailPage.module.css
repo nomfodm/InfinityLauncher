@@ -1,0 +1,85 @@
+.main {
+  height: 100vh;
+
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 90%), var(--infinity-image);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.content {
+  margin-top: 100px;
+  margin-left: 25px;
+
+  width: 100%;
+}
+
+.title {
+  width: 400px;
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  width: 400px;
+
+  margin-top: 30px;
+  overflow: visible;
+}
+
+.buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 45px;
+
+  border-radius: 10px;
+
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.settings_btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition: all linear 0.1s;
+}
+
+.process_information {
+  width: 400px;
+  font-size: 12px;
+  font-weight: 300;
+
+  margin-top: 20px;
+}
+
+.progress_bar {
+  width: 400px;
+  height: 5px;
+  border-radius: 9999px;
+
+  transition: all linear 0.1s;
+}
+
+.progress_bar::-webkit-progress-bar {
+  background: #fff;
+}
+
+.downloading::-webkit-progress-value {
+  background: #46c26c;
+}
+
+.extracting::-webkit-progress-value {
+  background: #fee75c;
+}
+
+.error::-webkit-progress-value,
+.error::-webkit-progress-bar {
+  background: #ed4245;
+}

@@ -1,0 +1,69 @@
+.main {
+  height: 100vh;
+
+  background: url("../../assets/images/main_page_background.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.content {
+  margin-top: 100px;
+  margin-left: 100px;
+}
+
+.infinity_title {
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.infinity_subtitle {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.infinity_title,
+.infinity_subtitle {
+  font-family: "Montserrat Alternates", Inter, sans-serif;
+}
+
+.main_page_text {
+  font-size: 16px;
+  font-weight: 400;
+
+  margin-top: 40px;
+}
+
+.button {
+  width: 120px;
+  height: 40px;
+  border-radius: 10px;
+  margin-top: 30px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  transition: all linear 0.1s;
+}
+
+.login {
+  background: rgba(50, 120, 103, 0.7);
+}
+
+.login:hover {
+  background: rgba(50, 120, 103, 0.9);
+}
+
+.play {
+  background: rgba(50, 82, 120, 0.7);
+}
+
+.play:hover {
+  background: rgba(50, 82, 120, 0.9);
+}
+
+.slideOut {
+  transition: all linear 0.1s;
+  opacity: 0;
+}

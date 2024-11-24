@@ -1,0 +1,18 @@
+.main {
+  height: 100vh;
+
+  background: url("../../assets/images/news_page_background.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.content {
+  margin-top: 100px;
+  margin-left: 50px;
+  overflow: visible;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}

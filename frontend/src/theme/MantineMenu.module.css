@@ -1,0 +1,35 @@
+.dropdown {
+  background-color: rgba(25, 37, 78);
+  outline: none;
+  border: none;
+}
+
+.label {
+  font-size: 12px;
+}
+
+.itemLabel {
+  font-size: 14px;
+}
+
+.item,
+.itemLabel,
+.itemSection {
+  background-color: transparent;
+}
+
+.item:hover {
+  background-color: rgb(31, 47, 96);
+}
+
+.divider {
+  border-color: #444a57;
+}
+
+.dropdown,
+.item,
+.itemLabel,
+.itemSection {
+  --wails-draggable: no-drag;
+  cursor: pointer;
+}
