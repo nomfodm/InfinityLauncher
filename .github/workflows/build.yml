@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: 'App'
+          - name: 'InfinityLauncher.exe'
             platform: 'windows/amd64'
             os: 'windows-latest'
 
