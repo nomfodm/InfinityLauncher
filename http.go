@@ -128,7 +128,7 @@ func RequestMe(accessToken string) (User, error) {
 	return unmarshalledResponse, nil
 }
 
-func DownloadFile(cancelCtx context.Context, url string, filepath string, callback func(value, total int64, speed float64)) error {
+func DownloadFile(cancelCtx context.Context, url string, headers Dict, filepath string, callback func(value, total int64, speed float64)) error {
 	req, err := http.NewRequestWithContext(cancelCtx, http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("ошибка создания запроса: %v", err)
