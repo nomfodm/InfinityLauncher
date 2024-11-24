@@ -1,0 +1,17 @@
+.main {
+    height: 100vh;
+
+    background: url("../../assets/images/main_page_background.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.content {
+    margin-top: 130px;
+}
+
+.error {
+    user-select: all;
+    --wails-draggable: no-drag;
+}

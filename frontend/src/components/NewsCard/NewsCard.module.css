@@ -1,0 +1,12 @@
+.card {
+  transition: all linear 0.15s;
+}
+
+.card *,
+.card:hover {
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: scale(1.04);
+}

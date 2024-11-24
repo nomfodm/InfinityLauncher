@@ -1,0 +1,18 @@
+.content,
+.header {
+  background: rgb(34, 43, 62);
+}
+
+.header {
+  min-height: 10px;
+}
+
+.close:hover {
+  background: rgb(34, 43, 62);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  overflow: visible;
+}

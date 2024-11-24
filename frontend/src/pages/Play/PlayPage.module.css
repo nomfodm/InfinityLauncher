@@ -1,0 +1,17 @@
+.main {
+  height: 100vh;
+  background: linear-gradient(to bottom, #2e337f 0%, #090a19 59%);
+  background-attachment: fixed;
+}
+
+.content {
+  margin-top: 100px;
+  margin-left: 87px;
+
+  overflow: visible;
+
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 26px;
+}
