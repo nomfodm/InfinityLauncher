@@ -1,4 +1,4 @@
 package main
 
-const BaseUrl = "http://localhost:8000"
+const BaseUrl = "https://api.infinityserver.ru"
 const S3StorageBaseUrl = "https://storage.infinityserver.ru"
