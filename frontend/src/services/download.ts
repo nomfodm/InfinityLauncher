@@ -6,7 +6,7 @@ import {
     downloadExtract,
     fetch,
     setDownloadProgress,
-    setDownloadProgressMessage, downloadIdle
+    setDownloadProgressMessage, downloadSuccess
 } from "../store/download";
 import {
     CheckGameFilesIntegrity,
@@ -50,20 +50,19 @@ class DownloadService {
             await CleanUp(gameProfileID, filesIntegrity)
         }
 
-        store.dispatch(playing(gameProfileID))
-        store.dispatch(downloadIdle())
-
+        store.dispatch(downloadSuccess())
         await new Promise(resolve => setTimeout(resolve, 1000))
-
 
         try {
             const authState = store.getState().auth
             if (authState.authed) {
                 await authService.me() // refresh token
                 const token = localStorage.getItem("token")!
+                store.dispatch(playing(gameProfileID))
                 store.dispatch(setGameStatusMessage("Игра запущена"))
                 await Play(gameProfileID, token)
             } else {
+                store.dispatch(playing(gameProfileID))
                 store.dispatch(setGameStatusMessage("Игра запущена"))
                 await PlayWithoutAccount(gameProfileID)
             }

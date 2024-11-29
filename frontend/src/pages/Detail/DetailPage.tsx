@@ -56,12 +56,14 @@ export default function DetailPage() {
 
     async function handleCancel() {
         EventsEmit("cancel")
+        store.dispatch(gameIdle())
         store.dispatch(downloadIdle())
     }
 
     async function handleCloseGame() {
         EventsEmit("closeGame")
         store.dispatch(gameIdle())
+        store.dispatch(downloadIdle())
     }
 
     return (
@@ -80,7 +82,7 @@ export default function DetailPage() {
                           mt={rem(25)}>{gameProfilesState.profiles.at(Number(id) - 1)!.description}</Text>
                     {isCurrentClientDownloading && !isCurrentClientPlaying ?
                         <section className={styles.buttons}>
-                            {[DownloadStatus.IDLE, DownloadStatus.ERROR, DownloadStatus.SUCCESS].includes(downloadState.status) &&
+                            {[DownloadStatus.IDLE, DownloadStatus.ERROR].includes(downloadState.status) &&
                                 <Button onClick={handlePlay} w={rem(150)} className={styles.play_btn}
                                         color={authState.authed ? "green" : "yellow"}>Играть</Button>}
                             {[DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING].includes(downloadState.status) &&
@@ -89,6 +91,9 @@ export default function DetailPage() {
                             {[DownloadStatus.FETCHING].includes(downloadState.status) &&
                                 <Button disabled w={rem(210)} className={styles.play_btn}
                                         color={"gray"}>Получаю файлы...</Button>}
+                            {[DownloadStatus.SUCCESS].includes(downloadState.status) &&
+                                <Button w={rem(150)} disabled className={styles.play_btn}
+                                        color={authState.authed ? "green" : "yellow"}>Играть</Button>}
                             <Button
                                 disabled={[DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING, DownloadStatus.FETCHING].includes(downloadState.status)}
                                 w={rem(45)} onClick={settingsModalHandlers.open} color={"indigo.9"}
@@ -141,7 +146,7 @@ export default function DetailPage() {
                         на сервере требуется вход ⓘ</Text></Tooltip>}
                     {isCurrentClientDownloading &&
                         <>
-                        {![DownloadStatus.IDLE].includes(downloadState.status) &&
+                        {![DownloadStatus.IDLE, DownloadStatus.SUCCESS].includes(downloadState.status) &&
                                 <Text style={{overflow: "visible"}} fz={"sm"}
                                       mt={rem(20)}>{downloadState.downloadProgress.progressMessage}</Text>}
                             {[DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING, DownloadStatus.ERROR].includes(downloadState.status) &&
