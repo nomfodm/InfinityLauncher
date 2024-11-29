@@ -41,8 +41,12 @@ export default function GameProfileSettingsModal({
 
     async function handleChoosePath() {
         const config = await ReadGameProfileConfig(profile.id)
+        const oldPath = config.path
         const newPath = await OpenDirectoryDialog(config.path)
         config.path = newPath
+        if (newPath.trim() === "") {
+            config.path = oldPath
+        }
         await WriteGameProfileConfig(profile.id, config)
         await MkDirAll(newPath)
         setGamePath(newPath)
