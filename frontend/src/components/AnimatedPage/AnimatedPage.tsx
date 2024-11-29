@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 const visible = { opacity: 1, transition: { duration: 0.3 } };
 
