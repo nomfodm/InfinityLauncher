@@ -1,7 +1,7 @@
 import styles from "./LauncherUpdatingPage.module.css";
 import {Anchor, Box, rem, Text} from "@mantine/core";
 import AnimatedPage from "../../components/AnimatedPage/AnimatedPage";
-import {useEffect, useState} from "react";
+import {useEffect} from "react";
 import {AnimatePresence, motion} from "motion/react"
 import {RestartApp, Update} from "../../wailsjs/go/main/App";
 import {BrowserOpenURL} from "../../wailsjs/runtime";
