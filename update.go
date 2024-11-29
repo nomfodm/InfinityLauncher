@@ -16,7 +16,7 @@ import (
 )
 
 func Update() error {
-	resp, err := http.Get("https://storage.infinityserver.ru/InfinityLauncher.exe")
+	resp, err := http.Get(ActualLauncherBinaryUrl)
 	if err != nil {
 		return err
 	}
