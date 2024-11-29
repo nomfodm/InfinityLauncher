@@ -13,3 +13,7 @@ export function getPersonalAccountPageUrl(): string {
 export function getRegisterPageUrl(): string {
   return `${frontendUrl}/register`;
 }
+
+export function getLauncherDownloadUrl(): string {
+  return `${frontendUrl}/launcher`
+}

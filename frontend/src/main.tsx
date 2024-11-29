@@ -15,8 +15,9 @@ import SimplifiedHeaderWithoutLink from "./components/SimplifiedHeader/Simplifie
 import FloatingWithoutUser from "./components/Floating/FloatingWithoutUser";
 import {Notifications} from "@mantine/notifications";
 import NotificationsClasses from "./theme/Notifications.module.css"
-import {Init} from "./wailsjs/go/main/App";
+import {CheckForUpdates, Init} from "./wailsjs/go/main/App";
 import {ModalsProvider} from "@mantine/modals";
+import LauncherUpdatingPage from "./pages/LauncherUpdating/LauncherUpdatingPage";
 
 const container = document.getElementById('root')
 const root = createRoot(container!)
@@ -35,8 +36,8 @@ const theme = createTheme({
     }
 })
 
-Init().then(() => root.render(
-    <React.StrictMode>
+Init().then(() => {
+    CheckForUpdates().then(() => root.render(
         <MantineProvider theme={theme} defaultColorScheme={"dark"}>
             <ModalsProvider>
                 <Notifications/>
@@ -47,8 +48,20 @@ Init().then(() => root.render(
                 </Provider>
             </ModalsProvider>
         </MantineProvider>
-    </React.StrictMode>
-)).catch((e) => root.render(
+    )).catch(() => {
+        root.render(
+            <MantineProvider theme={theme} defaultColorScheme={"dark"}>
+                <Provider store={store}>
+                    <SimplifiedHeaderWithoutLink/>
+                    <FloatingWithoutUser/>
+                    <LauncherUpdatingPage/>
+                </Provider>
+            </MantineProvider>
+        )
+
+    })
+
+}).catch((e) => root.render(
     <React.StrictMode>
         <MantineProvider theme={theme} defaultColorScheme={"dark"}>
             <SimplifiedHeaderWithoutLink/>

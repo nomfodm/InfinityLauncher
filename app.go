@@ -246,3 +246,20 @@ func (a *App) PlayWithoutAccount(profileID int) error {
 
 	return cmd.Run()
 }
+
+func (a *App) CheckForUpdates() error {
+	return CheckForUpdates(nil)
+}
+
+func (a *App) Update() error {
+	return Update()
+}
+
+func (a *App) RestartApp() error {
+	return RestartApp()
+}
+
+func (a *App) GetVersion() string {
+	version := gjson.Get(wailsJSON, "info.productVersion")
+	return version.String()
+}
