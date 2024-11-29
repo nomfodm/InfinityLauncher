@@ -34,6 +34,10 @@ export function FetchGameFilesInfo(arg1) {
   return window['go']['main']['App']['FetchGameFilesInfo'](arg1);
 }
 
+export function GetVersion() {
+  return window['go']['main']['App']['GetVersion']();
+}
+
 export function Init() {
   return window['go']['main']['App']['Init']();
 }

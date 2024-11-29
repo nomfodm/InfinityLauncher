@@ -6,12 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/tidwall/gjson"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"math/rand"
 	"os/exec"
 	"path"
 	"strings"
 	"syscall"
+)
+
+var (
+	updateFound = errors.New("update found")
 )
 
 type App struct {

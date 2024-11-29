@@ -1,10 +1,6 @@
 .main {
     height: 100vh;
-
-    background: url("../../assets/images/main_page_background.png");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-attachment: fixed;
+    background: #090A19;
 }
 
 .content {

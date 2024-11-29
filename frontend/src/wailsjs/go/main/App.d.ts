@@ -18,6 +18,8 @@ export function ExtractNecessaryParts(arg1:number,arg2:main.FileStructureDamage)
 
 export function FetchGameFilesInfo(arg1:number):Promise<main.FileStructureHashInfo>;
 
+export function GetVersion():Promise<string>;
+
 export function Init():Promise<void>;
 
 export function OpenDirectoryDialog(arg1:string):Promise<string>;

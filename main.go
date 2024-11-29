@@ -2,15 +2,24 @@ package main
 
 import (
 	"embed"
+	"fmt"
+	"github.com/tidwall/gjson"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	"path"
 )
 
 //go:embed frontend/dist
 var assets embed.FS
 
+//go:embed wails.json
+var wailsJSON string
+
 func main() {
+	version := gjson.Get(wailsJSON, "info.productVersion")
+
 	app := NewApp()
 	auth := NewAuth()
 	fs := NewFS()
@@ -18,7 +27,7 @@ func main() {
 	system := NewSystem()
 
 	err := wails.Run(&options.App{
-		Title:         "Лаунчер Infinity",
+		Title:         fmt.Sprintf("Лаунчер Infinity %s", version),
 		Width:         800,
 		Height:        500,
 		DisableResize: true,
@@ -36,45 +45,12 @@ func main() {
 			gameProfiler,
 			system,
 		},
+		Windows: &windows.Options{
+			WebviewUserDataPath: path.Join(AppFolderPath, "webview"),
+		},
 	})
 
 	if err != nil {
 		println("Error:", err.Error())
 	}
-
-	//accessTokenMain := ""
-	//if !auth.HadSession() {
-	//	accessToken, err := auth.Login("nomfodm", "123456")
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	fmt.Println("authed", accessToken)
-	//
-	//	accessTokenMain = accessToken
-	//
-	//	time.Sleep(time.Second)
-	//} else {
-	//	accessToken, err := auth.Refresh()
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	fmt.Println("refreshed", accessToken)
-	//
-	//	accessTokenMain = accessToken
-	//
-	//	time.Sleep(time.Second)
-	//}
-	//
-	//user, err := auth.Me(accessTokenMain)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//fmt.Println(user)
-	//
-	//err = auth.Logout()
-	//if err != nil {
-	//	panic(err)
-	//}
-
 }
