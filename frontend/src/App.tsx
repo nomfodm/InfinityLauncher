@@ -2,7 +2,7 @@ import './App.css';
 import {createHashRouter, Outlet, useLocation, useRoutes} from "react-router-dom";
 import Header from "./components/Header/Header";
 import Floating from "./components/Floating/Floating";
-import {AnimatePresence} from "framer-motion";
+import {AnimatePresence} from "motion/react";
 import MainPage from "./pages/Main/MainPage";
 import PlayPage from "./pages/Play/PlayPage";
 import React from "react";

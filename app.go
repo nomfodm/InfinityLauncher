@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/tidwall/gjson"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"math/rand"
 	"os/exec"
@@ -245,4 +246,21 @@ func (a *App) PlayWithoutAccount(profileID int) error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	return cmd.Run()
+}
+
+func (a *App) CheckForUpdates() error {
+	return CheckForUpdates(nil)
+}
+
+func (a *App) Update() error {
+	return Update()
+}
+
+func (a *App) RestartApp() error {
+	return RestartApp()
+}
+
+func (a *App) GetVersion() string {
+	version := gjson.Get(wailsJSON, "info.productVersion")
+	return version.String()
 }

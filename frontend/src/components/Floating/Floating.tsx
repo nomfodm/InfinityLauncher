@@ -18,11 +18,12 @@ import LoginModal from "../LoginModal/LoginModal";
 import {BrowserOpenURL, Quit, WindowMinimise} from "../../wailsjs/runtime";
 import {useAppSelector} from "../../store/hooks"
 import {getPersonalAccountPageUrl, getUserSkinAvatarUrl} from "../../utils/url";
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import gameProfiler from "../../services/gameProfiler";
 import store from "../../store";
 import {notifications} from "@mantine/notifications";
 import {DownloadStatus} from "../../store/download";
+import {GetVersion} from "../../wailsjs/go/main/App";
 
 
 export default function Floating() {
@@ -31,10 +32,13 @@ export default function Floating() {
   const [settingsOpened, settingsHandlers] = useDisclosure();
   const [loginOpened, loginHandlers] = useDisclosure();
 
+  const [version, setVersion] = useState("0.0.0")
+
   useEffect(() => {
     async function wrapper() {
       await authService.checkAuth()
       await gameProfiler.retrieve()
+      setVersion(await GetVersion())
     }
     wrapper()
   }, []);
@@ -90,7 +94,7 @@ export default function Floating() {
         </Menu.Target>
 
         <Menu.Dropdown>
-          <Menu.Label>Лаунчер v1.0</Menu.Label>
+          <Menu.Label>Лаунчер v{version}</Menu.Label>
           <Menu.Item
             onClick={settingsHandlers.open}
             leftSection={
