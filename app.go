@@ -15,10 +15,6 @@ import (
 	"syscall"
 )
 
-var (
-	updateFound = errors.New("update found")
-)
-
 type App struct {
 	ctx context.Context
 }

@@ -15,20 +15,37 @@ import (
 	"path/filepath"
 )
 
-func Update() error {
+var (
+	UpdateFound               = errors.New("update found")
+	ErrUpdateExeDoesNotExists = errors.New("update exe does not exists")
+)
+
+func RetrieveUpdateBinaryData() ([]byte, error) {
 	resp, err := http.Get(ActualLauncherBinaryUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		return nil, ErrUpdateExeDoesNotExists
+	}
+
 	binaryData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return binaryData, nil
+}
+
+func Update() error {
+	binaryData, err := RetrieveUpdateBinaryData()
 	if err != nil {
 		return err
 	}
 
 	isUpdatesFound := CheckForUpdates(binaryData)
-	if errors.Is(isUpdatesFound, updateFound) {
+	if errors.Is(isUpdatesFound, UpdateFound) {
 		hash := sha256.New()
 		if _, err := io.Copy(hash, bytes.NewReader(binaryData)); err != nil {
 			return err
@@ -53,16 +70,11 @@ func Update() error {
 
 func CheckForUpdates(onlineBinaryData []byte) error {
 	if onlineBinaryData == nil {
-		resp, err := http.Get("https://storage.infinityserver.ru/InfinityLauncher.exe")
+		onlineBinaryDataRetrieved, err := RetrieveUpdateBinaryData()
 		if err != nil {
 			return err
 		}
-		defer resp.Body.Close()
-
-		onlineBinaryData, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
+		onlineBinaryData = onlineBinaryDataRetrieved
 	}
 
 	executablePath, err := os.Executable()
@@ -97,7 +109,7 @@ func CheckForUpdates(onlineBinaryData []byte) error {
 		return err
 	}
 	if checksumOfCurrentExecutable != string(onlineExecutableHash.Sum(nil)) {
-		return updateFound
+		return UpdateFound
 	}
 	return nil
 }
