@@ -18,6 +18,13 @@ var (
 	modsZipUrl      = S3StorageBaseUrl + "/%d/mods.zip"
 	runtimeZipUrl   = S3StorageBaseUrl + "/%d/runtime.zip"
 	versionsZipUrl  = S3StorageBaseUrl + "/%d/versions.zip"
+
+	connectionTestS3Url = S3StorageBaseUrl + "/checkConnection"
+)
+
+var (
+	ErrConnectionToS3Failed      = errors.New("не удалось подключиться к файловому серверу Infinity")
+	ErrConnectionToBackendFailed = errors.New("не удалось подключиться к серверам Infinity")
 )
 
 type MinecraftDataResponse struct {
@@ -37,7 +44,9 @@ func GET(url string, headers Dict) ([]byte, error) {
 		request.Header.Add(key, value)
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 3,
+	}
 	response, err := client.Do(request)
 	if err != nil {
 		return []byte{}, err
@@ -68,7 +77,7 @@ func POST(url string, requestBody Dict, headers Dict) ([]byte, error) {
 	}
 
 	client := &http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 3 * time.Second,
 	}
 	response, err := client.Do(request)
 	if err != nil {
@@ -210,4 +219,37 @@ func RequestMinecraftUserData(accessToken string) (MinecraftDataResponse, error)
 	var unmarshalledResponse MinecraftDataResponse
 	err = json.Unmarshal(response, &unmarshalledResponse)
 	return unmarshalledResponse, nil
+}
+
+func TestConnection() error {
+	s3Response, err := GET(connectionTestS3Url, Dict{})
+	if err != nil {
+		return ErrConnectionToS3Failed
+	}
+
+	var unmarshalledResponse ConnectionTestResponse
+	err = json.Unmarshal(s3Response, &unmarshalledResponse)
+	if err != nil {
+		return ErrConnectionToS3Failed
+	}
+
+	if unmarshalledResponse.Status != "working" {
+		return ErrConnectionToS3Failed
+	}
+
+	backendResponse, err := GET(BaseUrl+"/checkConnection", Dict{})
+	if err != nil {
+		return ErrConnectionToBackendFailed
+	}
+
+	err = json.Unmarshal(backendResponse, &unmarshalledResponse)
+	if err != nil {
+		return ErrConnectionToBackendFailed
+	}
+
+	if unmarshalledResponse.Status != "working" {
+		return ErrConnectionToS3Failed
+	}
+
+	return nil
 }

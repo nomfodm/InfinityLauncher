@@ -39,6 +39,11 @@ func (a *App) Init() error {
 		return err
 	}
 
+	err = TestConnection()
+	if err != nil {
+		return err
+	}
+
 	fs := NewFS()
 	err = fs.InitFS()
 	if err != nil {

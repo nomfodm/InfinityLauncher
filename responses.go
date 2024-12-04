@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type StatusResponse struct {
 	Status string `json:"status"`
 }
@@ -17,4 +19,9 @@ type RefreshResponse struct {
 type ErrorResponse struct {
 	Error  string `json:"error"`
 	Detail string `json:"detail"`
+}
+
+type ConnectionTestResponse struct {
+	Status     string     `json:"status"`
+	ServerTime *time.Time `json:"serverTime"`
 }
