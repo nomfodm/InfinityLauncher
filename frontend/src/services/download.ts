@@ -56,7 +56,7 @@ class DownloadService {
         try {
             const authState = store.getState().auth
             if (authState.authed) {
-                await authService.me() // refresh token
+                await authService.checkAuth() // refresh token
                 const token = localStorage.getItem("token")!
                 store.dispatch(playing(gameProfileID))
                 store.dispatch(setGameStatusMessage("Игра запущена"))
