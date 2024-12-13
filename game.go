@@ -65,7 +65,7 @@ func GetGameClientFoldersPaths(profileID int, fileSuffix string) (string, string
 	return assetsPath, librariesPath, modsPath, runtimePath, versionsPath, nil
 }
 
-func CheckGameFilesIntegrity(ctx context.Context, profileID int, filesInfoFromServer FileStructureHashInfo) (FileStructureDamage, error) {
+func CheckGameFilesIntegrity(profileID int, filesInfoFromServer FileStructureHashInfo) (FileStructureDamage, error) {
 	var gameFileStructureDamage FileStructureDamage
 
 	fs := NewFS()
@@ -84,11 +84,11 @@ func CheckGameFilesIntegrity(ctx context.Context, profileID int, filesInfoFromSe
 		return gameFileStructureDamage, err
 	}
 
-	assetsInfo, _, _ := HashDir(ctx, assetsPath, assetsPath)
-	librariesInfo, _, _ := HashDir(ctx, librariesPath, librariesPath)
-	modsInfo, _, _ := HashDir(ctx, modsPath, modsPath)
-	runtimeInfo, _, _ := HashDir(ctx, runtimePath, runtimePath)
-	versionsInfo, _, _ := HashDir(ctx, versionsPath, versionsPath)
+	assetsInfo, _, _ := HashDir(assetsPath)
+	librariesInfo, _, _ := HashDir(librariesPath)
+	modsInfo, _, _ := HashDir(modsPath)
+	runtimeInfo, _, _ := HashDir(runtimePath)
+	versionsInfo, _, _ := HashDir(versionsPath)
 
 	if assetsInfo != filesInfoFromServer.Assets.SHA256 {
 		gameFileStructureDamage.AssetsDamaged = true

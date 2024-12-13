@@ -61,7 +61,7 @@ func (a *App) FetchGameFilesInfo(profileID int) (FileStructureHashInfo, error) {
 }
 
 func (a *App) CheckGameFilesIntegrity(profileID int, filesInfoFromServer FileStructureHashInfo) (FileStructureDamage, error) {
-	return CheckGameFilesIntegrity(a.ctx, profileID, filesInfoFromServer)
+	return CheckGameFilesIntegrity(profileID, filesInfoFromServer)
 }
 
 func (a *App) DownloadNecessaryParts(profileID int, damage FileStructureDamage) error {

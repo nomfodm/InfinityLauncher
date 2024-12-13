@@ -27,7 +27,7 @@ func main() {
 	system := NewSystem()
 
 	err := wails.Run(&options.App{
-		Title:         fmt.Sprintf("Лаунчер Infinity %s", version),
+		Title:         fmt.Sprintf("Лаунчер Infinity v%s", version),
 		Width:         800,
 		Height:        500,
 		DisableResize: true,

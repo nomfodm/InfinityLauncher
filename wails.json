@@ -14,7 +14,7 @@
   "info": {
     "companyName": "InfinityMC",
     "productName": "Infinity Launcher",
-    "productVersion": "1.0.2-beta",
+    "productVersion": "1.0.3-beta",
     "copyright": "Copyright © nomfodm",
     "comments": "Made by nomfodm with Go and Wails",
     "fileAssociations": [
