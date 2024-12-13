@@ -1,16 +1,14 @@
 package main
 
 import (
-	"context"
 	"crypto/sha256"
-	"errors"
-	"fmt"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"encoding/hex"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
-	"strings"
+	"sync"
 )
 
 type GameFileInfo struct {
@@ -18,61 +16,90 @@ type GameFileInfo struct {
 	SHA256   string `json:"sha256"`
 }
 
-func CalculateFilesSHA256Hash(ctx context.Context, files []string) (string, []GameFileInfo, error) {
-	dirHash := sha256.New()
-	files = append([]string(nil), files...)
-	sort.Strings(files)
-	var filesInDirHashes []GameFileInfo
-	for _, filePath := range files {
-		if strings.Contains(filePath, "\n") {
-			return "", filesInDirHashes, errors.New("dirhash: filenames with newlines are not supported")
-		}
-		file, err := os.Open(filePath)
-		if err != nil {
-			return "", filesInDirHashes, err
-		}
-		currentFileHash := sha256.New()
-		_, err = io.Copy(currentFileHash, file)
-		file.Close()
-		if err != nil {
-			return "", filesInDirHashes, err
-		}
-		filename := filepath.Base(filePath)
-		runtime.EventsEmit(ctx, "setFilenameOfCurrentFile", Dict{"filename": filename})
-		fmt.Fprintf(dirHash, "%x  %s\n", currentFileHash.Sum(nil), filename)
-		filesInDirHashes = append(filesInDirHashes, GameFileInfo{Filename: filePath, SHA256: fmt.Sprintf("%x", currentFileHash.Sum(nil))})
-	}
-	return fmt.Sprintf("%x", dirHash.Sum(nil)), filesInDirHashes, nil
-}
-
-func HashDir(ctx context.Context, dir, prefix string) (string, []GameFileInfo, error) {
-	files, err := DirFiles(dir, prefix)
+func calculateFileHash(filepath string) (string, error) {
+	file, err := os.Open(filepath)
 	if err != nil {
-		return "", []GameFileInfo{}, err
+		return "", err
 	}
-	return CalculateFilesSHA256Hash(ctx, files)
+	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-func DirFiles(dir, prefix string) ([]string, error) {
-	var files []string
-	dir = filepath.Clean(dir)
-	err := filepath.Walk(dir, func(filename string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+func HashDir(directory string) (string, []GameFileInfo, error) {
+	var fileHashes []GameFileInfo
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	fileChan := make(chan string, 100)
+	errorChan := make(chan error, 1)
+
+	worker := func() {
+		for file := range fileChan {
+			hash, err := calculateFileHash(file)
+			if err != nil {
+				errorChan <- err
+				continue
+			}
+
+			relativePath, _ := filepath.Rel(directory, file)
+			mu.Lock()
+
+			fileHashes = append(fileHashes, GameFileInfo{
+				Filename: path.Join(directory, relativePath),
+				SHA256:   hash,
+			})
+
+			mu.Unlock()
 		}
-		if info.IsDir() {
+		wg.Done()
+	}
+
+	numWorkers := 64
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go worker()
+	}
+
+	go func() {
+		defer close(fileChan)
+		err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if info.IsDir() {
+				return nil
+			}
+
+			fileChan <- path
 			return nil
+		})
+		if err != nil {
+			errorChan <- err
 		}
-		rel := filename
-		if dir != "." {
-			rel = filename[len(dir)+1:]
-		}
-		f := filepath.Join(prefix, rel)
-		files = append(files, filepath.ToSlash(f))
-		return nil
-	})
-	if err != nil {
-		return nil, err
+	}()
+
+	wg.Wait()
+	close(errorChan)
+
+	if err, ok := <-errorChan; ok {
+		return "", nil, err
 	}
-	return files, nil
+
+	sort.Slice(fileHashes, func(i, j int) bool {
+		return fileHashes[i].Filename < fileHashes[j].Filename
+	})
+
+	dirHasher := sha256.New()
+	for _, fh := range fileHashes {
+		dirHasher.Write([]byte(fh.SHA256))
+	}
+	dirHash := hex.EncodeToString(dirHasher.Sum(nil))
+
+	return dirHash, fileHashes, nil
 }

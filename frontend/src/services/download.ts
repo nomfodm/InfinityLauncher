@@ -34,9 +34,7 @@ class DownloadService {
 
         await new Promise(resolve => setTimeout(resolve, 1000))
 
-        EventsOn("setFilenameOfCurrentFile", (data: {filename: string}) => store.dispatch(setDownloadProgressMessage(`Проверка целостности файлов (${data.filename})...`)))
         const filesIntegrity = await this.verifyFiles(gameProfileID)
-        EventsOff("setFilenameOfCurrentFile")
 
         if (filesIntegrity.assetsDamaged || filesIntegrity.librariesDamaged || filesIntegrity.modsDamaged || filesIntegrity.runtimeDamaged || filesIntegrity.versionsDamaged) {
             const downloadResult = await this.downloadNecessaryParts(gameProfileID, filesIntegrity)
