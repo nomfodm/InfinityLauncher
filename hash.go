@@ -16,8 +16,8 @@ type GameFileInfo struct {
 	SHA256   string `json:"sha256"`
 }
 
-func calculateFileHash(filepath string) (string, error) {
-	file, err := os.Open(filepath)
+func calculateFileHash(filePath string) (string, error) {
+	file, err := os.Open(filePath)
 	if err != nil {
 		return "", err
 	}
@@ -28,7 +28,8 @@ func calculateFileHash(filepath string) (string, error) {
 		return "", err
 	}
 
-	hasher.Write([]byte(filepath))
+	filename := filepath.Base(filePath)
+	hasher.Write([]byte(filename))
 
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
