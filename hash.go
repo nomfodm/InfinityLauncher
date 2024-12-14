@@ -28,6 +28,8 @@ func calculateFileHash(filepath string) (string, error) {
 		return "", err
 	}
 
+	hasher.Write([]byte(filepath))
+
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
