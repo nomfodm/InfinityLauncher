@@ -6,7 +6,7 @@ import {
     downloadExtract,
     fetch,
     setDownloadProgress,
-    setDownloadProgressMessage, downloadSuccess
+    setDownloadProgressMessage, downloadSuccess, downloadIdle
 } from "../store/download";
 import {
     CheckGameFilesIntegrity,
@@ -65,9 +65,10 @@ class DownloadService {
                 await PlayWithoutAccount(gameProfileID)
             }
             store.dispatch(gameIdle())
+            store.dispatch(downloadIdle())
         } catch (e) {
             store.dispatch(gameError())
-            store.dispatch(setGameStatusMessage(e as string))
+            store.dispatch(setGameStatusMessage(`Ошибка: ${e as string}`))
             console.log(e)
         }
 
