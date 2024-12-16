@@ -62,7 +62,7 @@ func HashDir(directory string) (string, []GameFileInfo, error) {
 		wg.Done()
 	}
 
-	numWorkers := 64
+	numWorkers := 128
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go worker()
