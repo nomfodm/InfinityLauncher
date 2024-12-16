@@ -94,7 +94,7 @@ export default function Floating() {
         </Menu.Target>
 
         <Menu.Dropdown>
-          <Menu.Label>Лаунчер v{version}</Menu.Label>
+          <Menu.Label>Лаунчер {version}</Menu.Label>
           <Menu.Item
             onClick={settingsHandlers.open}
             leftSection={
