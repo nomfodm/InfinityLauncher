@@ -33,6 +33,11 @@ type MinecraftDataResponse struct {
 	UUID        string `json:"uuid"`
 }
 
+type LauncherVersionInformation struct {
+	ActualVersion    string `json:"version"`
+	ActualHashSHA256 string `json:"hash"`
+}
+
 type Dict map[string]string
 
 func GET(url string, headers Dict) ([]byte, error) {
@@ -217,6 +222,16 @@ func RequestMinecraftUserData(accessToken string) (MinecraftDataResponse, error)
 		return MinecraftDataResponse{}, err
 	}
 	var unmarshalledResponse MinecraftDataResponse
+	err = json.Unmarshal(response, &unmarshalledResponse)
+	return unmarshalledResponse, nil
+}
+
+func RequestLauncherVersionInformation() (LauncherVersionInformation, error) {
+	response, err := GET(BaseUrl+"/launcher/updates", Dict{})
+	if err != nil {
+		return LauncherVersionInformation{}, err
+	}
+	var unmarshalledResponse LauncherVersionInformation
 	err = json.Unmarshal(response, &unmarshalledResponse)
 	return unmarshalledResponse, nil
 }

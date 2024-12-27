@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
-	"fmt"
 	"github.com/minio/selfupdate"
 	"io"
 	"net/http"
@@ -39,13 +39,16 @@ func RetrieveUpdateBinaryData() ([]byte, error) {
 }
 
 func Update() error {
-	binaryData, err := RetrieveUpdateBinaryData()
+	isUpdatesFound, err := CheckForUpdates()
 	if err != nil {
 		return err
 	}
+	if isUpdatesFound {
+		binaryData, err := RetrieveUpdateBinaryData()
+		if err != nil {
+			return err
+		}
 
-	isUpdatesFound := CheckForUpdates(binaryData)
-	if errors.Is(isUpdatesFound, UpdateFound) {
 		hash := sha256.New()
 		if _, err := io.Copy(hash, bytes.NewReader(binaryData)); err != nil {
 			return err
@@ -59,59 +62,51 @@ func Update() error {
 
 		if err != nil {
 			if rerr := selfupdate.RollbackError(err); rerr != nil {
-				fmt.Printf("Failed to rollback from bad update: %v\n", rerr)
+				return rerr
 			}
 		}
-		return nil
 	}
 
-	return isUpdatesFound
+	return nil
 }
 
-func CheckForUpdates(onlineBinaryData []byte) error {
-	if onlineBinaryData == nil {
-		onlineBinaryDataRetrieved, err := RetrieveUpdateBinaryData()
-		if err != nil {
-			return err
-		}
-		onlineBinaryData = onlineBinaryDataRetrieved
+func CheckForUpdates() (bool, error) {
+	launcherVersionInformation, err := RequestLauncherVersionInformation()
+	if err != nil {
+		return false, err
 	}
 
 	executablePath, err := os.Executable()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	executablePathSymlinkEvaluated, err := filepath.EvalSymlinks(executablePath)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	executableFile, err := os.Open(executablePathSymlinkEvaluated)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	binaryData, err := io.ReadAll(executableFile)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	currentExecutableHash := sha256.New()
 	if _, err = io.Copy(currentExecutableHash, bytes.NewBuffer(binaryData)); err != nil {
-		return err
+		return false, err
 	}
 
-	checksumOfCurrentExecutable := string(currentExecutableHash.Sum(nil))
+	checksumOfCurrentExecutable := hex.EncodeToString(currentExecutableHash.Sum(nil))
 
-	onlineExecutableHash := sha256.New()
-	if _, err = io.Copy(onlineExecutableHash, bytes.NewBuffer(onlineBinaryData)); err != nil {
-		return err
+	if GetLauncherVersion() != launcherVersionInformation.ActualVersion || checksumOfCurrentExecutable != launcherVersionInformation.ActualHashSHA256 {
+		return true, nil
 	}
-	if checksumOfCurrentExecutable != string(onlineExecutableHash.Sum(nil)) {
-		return UpdateFound
-	}
-	return nil
+	return false, nil
 }
 
 func RestartApp() error {

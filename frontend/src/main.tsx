@@ -37,28 +37,44 @@ const theme = createTheme({
 })
 
 Init().then(() => {
-    CheckForUpdates().then(() => root.render(
-        <MantineProvider theme={theme} defaultColorScheme={"dark"}>
-            <ModalsProvider>
-                <Notifications/>
-                <Provider store={store}>
-                    <HashRouter>
-                        <App/>
-                    </HashRouter>
-                </Provider>
-            </ModalsProvider>
-        </MantineProvider>
-    )).catch(() => {
+    CheckForUpdates().then((updateFound) => {
+        if (updateFound) {
+            root.render(
+                <MantineProvider theme={theme} defaultColorScheme={"dark"}>
+                    <Provider store={store}>
+                        <SimplifiedHeaderWithoutLink/>
+                        <FloatingWithoutUser/>
+                        <LauncherUpdatingPage/>
+                    </Provider>
+                </MantineProvider>
+            )
+            return
+        }
         root.render(
             <MantineProvider theme={theme} defaultColorScheme={"dark"}>
-                <Provider store={store}>
-                    <SimplifiedHeaderWithoutLink/>
-                    <FloatingWithoutUser/>
-                    <LauncherUpdatingPage/>
-                </Provider>
+                <ModalsProvider>
+                    <Notifications/>
+                    <Provider store={store}>
+                        <HashRouter>
+                            <App/>
+                        </HashRouter>
+                    </Provider>
+                </ModalsProvider>
             </MantineProvider>
         )
-
+    }).catch(() => {
+        root.render(
+            <MantineProvider theme={theme} defaultColorScheme={"dark"}>
+                <ModalsProvider>
+                    <Notifications/>
+                    <Provider store={store}>
+                        <HashRouter>
+                            <App/>
+                        </HashRouter>
+                    </Provider>
+                </ModalsProvider>
+            </MantineProvider>
+        )
     })
 
 }).catch((e) => root.render(
