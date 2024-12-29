@@ -18,6 +18,8 @@ import NotificationsClasses from "./theme/Notifications.module.css"
 import {CheckForUpdates, Init} from "./wailsjs/go/main/App";
 import {ModalsProvider} from "@mantine/modals";
 import LauncherUpdatingPage from "./pages/LauncherUpdating/LauncherUpdatingPage";
+import authService from "./services/auth";
+import gameProfiler from "./services/gameProfiler";
 
 const container = document.getElementById('root')
 const root = createRoot(container!)
@@ -36,6 +38,24 @@ const theme = createTheme({
     }
 })
 
+async function renderMain() {
+    await authService.checkAuth()
+    await gameProfiler.retrieve()
+
+    root.render(
+        <MantineProvider theme={theme} defaultColorScheme={"dark"}>
+            <ModalsProvider>
+                <Notifications/>
+                <Provider store={store}>
+                    <HashRouter>
+                        <App/>
+                    </HashRouter>
+                </Provider>
+            </ModalsProvider>
+        </MantineProvider>
+    )
+}
+
 Init().then(() => {
     CheckForUpdates().then((updateFound) => {
         if (updateFound) {
@@ -50,31 +70,9 @@ Init().then(() => {
             )
             return
         }
-        root.render(
-            <MantineProvider theme={theme} defaultColorScheme={"dark"}>
-                <ModalsProvider>
-                    <Notifications/>
-                    <Provider store={store}>
-                        <HashRouter>
-                            <App/>
-                        </HashRouter>
-                    </Provider>
-                </ModalsProvider>
-            </MantineProvider>
-        )
+        renderMain()
     }).catch(() => {
-        root.render(
-            <MantineProvider theme={theme} defaultColorScheme={"dark"}>
-                <ModalsProvider>
-                    <Notifications/>
-                    <Provider store={store}>
-                        <HashRouter>
-                            <App/>
-                        </HashRouter>
-                    </Provider>
-                </ModalsProvider>
-            </MantineProvider>
-        )
+        renderMain()
     })
 
 }).catch((e) => root.render(

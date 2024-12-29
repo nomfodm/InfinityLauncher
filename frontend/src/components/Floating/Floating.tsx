@@ -19,7 +19,6 @@ import {BrowserOpenURL, Quit, WindowMinimise} from "../../wailsjs/runtime";
 import {useAppSelector} from "../../store/hooks"
 import {getPersonalAccountPageUrl, getUserSkinAvatarUrl} from "../../utils/url";
 import {useEffect, useState} from "react";
-import gameProfiler from "../../services/gameProfiler";
 import store from "../../store";
 import {notifications} from "@mantine/notifications";
 import {DownloadStatus} from "../../store/download";
@@ -36,8 +35,6 @@ export default function Floating() {
 
   useEffect(() => {
     async function wrapper() {
-      await authService.checkAuth()
-      await gameProfiler.retrieve()
       setVersion(await GetVersion())
     }
     wrapper()
