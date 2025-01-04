@@ -23,8 +23,8 @@ var (
 )
 
 var (
-	ErrConnectionToS3Failed      = errors.New("не удалось подключиться к файловому серверу Infinity")
-	ErrConnectionToBackendFailed = errors.New("не удалось подключиться к серверам Infinity")
+	ErrConnectionFailed = errors.New("не удалось подключиться к серверам Infinity")
+	ErrServerIsDown     = errors.New("сервера отключены, возможно проводятся тех.работы")
 )
 
 type MinecraftDataResponse struct {
@@ -239,31 +239,31 @@ func RequestLauncherVersionInformation() (LauncherVersionInformation, error) {
 func TestConnection() error {
 	s3Response, err := GET(connectionTestS3Url, Dict{})
 	if err != nil {
-		return ErrConnectionToS3Failed
+		return ErrConnectionFailed
 	}
 
 	var unmarshalledResponse ConnectionTestResponse
 	err = json.Unmarshal(s3Response, &unmarshalledResponse)
 	if err != nil {
-		return ErrConnectionToS3Failed
+		return ErrConnectionFailed
 	}
 
 	if unmarshalledResponse.Status != "working" {
-		return ErrConnectionToS3Failed
+		return ErrServerIsDown
 	}
 
 	backendResponse, err := GET(BaseUrl+"/checkConnection", Dict{})
 	if err != nil {
-		return ErrConnectionToBackendFailed
+		return ErrConnectionFailed
 	}
 
 	err = json.Unmarshal(backendResponse, &unmarshalledResponse)
 	if err != nil {
-		return ErrConnectionToBackendFailed
+		return ErrConnectionFailed
 	}
 
 	if unmarshalledResponse.Status != "working" {
-		return ErrConnectionToS3Failed
+		return ErrServerIsDown
 	}
 
 	return nil
