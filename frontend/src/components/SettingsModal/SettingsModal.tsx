@@ -1,8 +1,8 @@
 import {Group, Modal, Switch, Text} from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import {ReadLauncherConfig, WriteLauncherConfig} from "../../wailsjs/go/main/FS";
 
-import {ReadConfig, WriteConfig} from "../../wailsjs/go/main/FS";
 
 export default function SettingsModal({
   opened,
@@ -15,7 +15,7 @@ export default function SettingsModal({
 
   useEffect(() => {
     async function asyncWrapper() {
-      const config = await ReadConfig();
+      const config = await ReadLauncherConfig();
 
       setCloseOnGameStart(config.closeOnGameStart);
     }
@@ -23,14 +23,13 @@ export default function SettingsModal({
     asyncWrapper();
   }, []);
 
-  /* eslint-disable  @typescript-eslint/no-explicit-any */
-  async function handleCloseOnGameStartSwitch(e: any) {
+  async function handleCloseOnGameStartSwitch(e: React.ChangeEvent<HTMLInputElement>) {
     setCloseOnGameStart(e.target.checked);
 
-    const config = await ReadConfig();
+    const config = await ReadLauncherConfig();
     config.closeOnGameStart = e.target.checked;
 
-    await WriteConfig(config);
+    await WriteLauncherConfig(config);
   }
 
   return (

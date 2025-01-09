@@ -18,18 +18,18 @@ export function MkDirAll(arg1) {
   return window['go']['main']['FS']['MkDirAll'](arg1);
 }
 
-export function ReadConfig() {
-  return window['go']['main']['FS']['ReadConfig']();
-}
-
 export function ReadGameProfileConfig(arg1) {
   return window['go']['main']['FS']['ReadGameProfileConfig'](arg1);
 }
 
-export function WriteConfig(arg1) {
-  return window['go']['main']['FS']['WriteConfig'](arg1);
+export function ReadLauncherConfig() {
+  return window['go']['main']['FS']['ReadLauncherConfig']();
 }
 
 export function WriteGameProfileConfig(arg1, arg2) {
   return window['go']['main']['FS']['WriteGameProfileConfig'](arg1, arg2);
+}
+
+export function WriteLauncherConfig(arg1) {
+  return window['go']['main']['FS']['WriteLauncherConfig'](arg1);
 }

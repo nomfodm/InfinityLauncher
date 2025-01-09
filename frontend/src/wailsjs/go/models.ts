@@ -1,17 +1,5 @@
 export namespace main {
 	
-	export class Config {
-	    closeOnGameStart: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new Config(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.closeOnGameStart = source["closeOnGameStart"];
-	    }
-	}
 	export class FileStructureDamage {
 	    assetsDamaged: boolean;
 	    librariesDamaged: boolean;
@@ -153,6 +141,18 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ram = source["ram"];
 	        this.path = source["path"];
+	    }
+	}
+	export class LauncherConfig {
+	    closeOnGameStart: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new LauncherConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.closeOnGameStart = source["closeOnGameStart"];
 	    }
 	}
 	export class MinecraftCredential {

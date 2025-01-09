@@ -1,7 +1,7 @@
 import styles from "./LauncherUpdatingPage.module.css";
 import {Anchor, Box, rem, Text} from "@mantine/core";
 import AnimatedPage from "../../components/AnimatedPage/AnimatedPage";
-import {useEffect} from "react";
+import {useCallback, useEffect} from "react";
 import {AnimatePresence, motion} from "motion/react"
 import {RestartApp, Update} from "../../wailsjs/go/main/App";
 import {BrowserOpenURL} from "../../wailsjs/runtime";
@@ -17,19 +17,7 @@ import {
 export default function LauncherUpdatingPage() {
     const launcherUpdatingState = useAppSelector(state => state.launcherUpdate)
 
-    useEffect(() => {
-        let timeout: number;
-        if (!launcherUpdatingState.updating && launcherUpdatingState.countdown > 0) {
-            timeout = setTimeout(() => store.dispatch(launcherUpdateDecreaseCountdown()), 1000);
-        } else {
-            update()
-        }
-        return () => {
-            clearTimeout(timeout)
-        }
-    }, [launcherUpdatingState.updating, launcherUpdatingState.countdown]);
-
-    async function update() {
+    const update = useCallback(async () => {
         if (launcherUpdatingState.updating) return
         store.dispatch(setLauncherUpdating(true))
 
@@ -44,8 +32,19 @@ export default function LauncherUpdatingPage() {
             console.log(e)
             store.dispatch(setLauncherUpdateError(true))
         }
+    }, [launcherUpdatingState.updating])
 
-    }
+    useEffect(() => {
+        let timeout: number;
+        if (!launcherUpdatingState.updating && launcherUpdatingState.countdown > 0) {
+            timeout = setTimeout(() => store.dispatch(launcherUpdateDecreaseCountdown()), 1000);
+        } else {
+            update()
+        }
+        return () => {
+            clearTimeout(timeout)
+        }
+    }, [launcherUpdatingState.updating, launcherUpdatingState.countdown]);
 
     return <>
         <AnimatedPage>
