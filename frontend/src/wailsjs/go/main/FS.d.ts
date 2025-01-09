@@ -10,10 +10,10 @@ export function InitGameProfileConfig(arg1:number,arg2:string):Promise<void>;
 
 export function MkDirAll(arg1:string):Promise<void>;
 
-export function ReadConfig():Promise<main.Config>;
-
 export function ReadGameProfileConfig(arg1:number):Promise<main.GameProfileConfig>;
 
-export function WriteConfig(arg1:main.Config):Promise<void>;
+export function ReadLauncherConfig():Promise<main.LauncherConfig>;
 
 export function WriteGameProfileConfig(arg1:number,arg2:main.GameProfileConfig):Promise<void>;
+
+export function WriteLauncherConfig(arg1:main.LauncherConfig):Promise<void>;

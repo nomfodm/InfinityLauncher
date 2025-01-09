@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -10,7 +9,7 @@ import (
 
 type FS struct{}
 
-type Config struct {
+type LauncherConfig struct {
 	CloseOnGameStart bool `json:"closeOnGameStart"`
 }
 
@@ -31,7 +30,7 @@ func NewFS() *FS {
 }
 
 func (fs *FS) InitFS() error {
-	err := os.MkdirAll(AppFolderPath, os.ModePerm)
+	err := os.MkdirAll(GameProfilesConfigFolderPath, os.ModePerm) // nested %appdata%/.infinity/profiles
 	if err != nil {
 		return err
 	}
@@ -40,89 +39,84 @@ func (fs *FS) InitFS() error {
 }
 
 func (fs *FS) initConfig() error {
-	_, err := os.Open(AppConfigPath)
-	if !errors.Is(err, os.ErrNotExist) {
-		return nil
+	if LauncherConfigFileExists() {
+		config, err := fs.ReadLauncherConfig()
+		if err != nil {
+			return err
+		}
+
+		return fs.WriteLauncherConfig(config)
 	}
 
-	defaultConfig := Config{CloseOnGameStart: true}
-	marshalledConfig, err := json.Marshal(defaultConfig)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(AppConfigPath, marshalledConfig, 0644)
+	defaultConfig := *GenerateDefaultLauncherConfig()
+	return fs.WriteLauncherConfig(defaultConfig)
 }
 
-func (fs *FS) WriteConfig(newConfig Config) error {
-	marshalledConfig, err := json.Marshal(newConfig)
-	if err != nil {
-		return err
+func GenerateDefaultLauncherConfig() *LauncherConfig {
+	return &LauncherConfig{
+		CloseOnGameStart: false,
 	}
-
-	return os.WriteFile(AppConfigPath, marshalledConfig, 0644)
 }
 
-func (fs *FS) ReadConfig() (Config, error) {
-	rawConfig, err := os.ReadFile(AppConfigPath)
-	if err != nil {
-		return Config{}, err
+func (fs *FS) WriteLauncherConfig(newConfig LauncherConfig) error {
+	return WriteJSONToFile(AppConfigPath, newConfig)
+}
+
+func (fs *FS) ReadLauncherConfig() (LauncherConfig, error) {
+	return ReadJSONFromFile[LauncherConfig](AppConfigPath)
+}
+
+func LauncherConfigFileExists() bool {
+	if _, err := os.Stat(AppConfigPath); os.IsNotExist(err) {
+		return false
 	}
-
-	var unmarshalledConfig Config
-	err = json.Unmarshal(rawConfig, &unmarshalledConfig)
-
-	return unmarshalledConfig, err
+	return true
 }
 
 func (fs *FS) InitGameProfileConfig(id int, profileName string) error {
-	gameProfileClientFolderPath := path.Join(AppFolderPath, profileName)
-	err := os.MkdirAll(GameProfilesConfigFolderPath, os.ModePerm)
-	if err != nil {
-		fmt.Println(1)
-		return err
-	}
-	configPath := path.Join(GameProfilesConfigFolderPath, fmt.Sprintf("%d.json", id))
-	_, err = os.Open(configPath)
-	if !errors.Is(err, os.ErrNotExist) {
-		return nil
+	if GameProfileConfigFileExists(id) {
+		config, err := fs.ReadGameProfileConfig(id)
+		if err != nil {
+			return err
+		}
+
+		return fs.WriteGameProfileConfig(id, config)
 	}
 
-	err = os.MkdirAll(gameProfileClientFolderPath, os.ModePerm)
-	if err != nil {
-		return err
-	}
+	gameProfileClientFolderPath := GetGameProfileFolderPath(profileName)
 
-	defaultConfig := GameProfileConfig{Path: gameProfileClientFolderPath, Ram: 1024}
-	marshalledConfig, err := json.Marshal(defaultConfig)
-	if err != nil {
-		return err
-	}
+	defaultConfig := GenerateDefaultGameProfileConfig(gameProfileClientFolderPath)
+	return fs.WriteGameProfileConfig(id, defaultConfig)
+}
 
-	return os.WriteFile(configPath, marshalledConfig, 0644)
+func GenerateDefaultGameProfileConfig(gameProfileClientFolderPath string) GameProfileConfig {
+	return GameProfileConfig{Path: gameProfileClientFolderPath, Ram: 1024}
+}
+
+func GameProfileConfigFileExists(id int) bool {
+	configPath := GetGameProfileConfigPath(id)
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
 
 func (fs *FS) WriteGameProfileConfig(id int, newConfig GameProfileConfig) error {
-	configPath := path.Join(GameProfilesConfigFolderPath, fmt.Sprintf("%d.json", id))
-	marshalledConfig, err := json.Marshal(newConfig)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(configPath, marshalledConfig, 0644)
+	configPath := GetGameProfileConfigPath(id)
+	return WriteJSONToFile(configPath, newConfig)
 }
 
 func (fs *FS) ReadGameProfileConfig(id int) (GameProfileConfig, error) {
-	configPath := path.Join(GameProfilesConfigFolderPath, fmt.Sprintf("%d.json", id))
-	rawConfig, err := os.ReadFile(configPath)
-	if err != nil {
-		return GameProfileConfig{}, err
-	}
+	configPath := GetGameProfileConfigPath(id)
+	return ReadJSONFromFile[GameProfileConfig](configPath)
+}
 
-	var unmarshalledConfig GameProfileConfig
-	err = json.Unmarshal(rawConfig, &unmarshalledConfig)
+func GetGameProfileConfigPath(id int) string {
+	return path.Join(GameProfilesConfigFolderPath, fmt.Sprintf("%d.json", id))
+}
 
-	return unmarshalledConfig, err
+func GetGameProfileFolderPath(profileName string) string {
+	return path.Join(AppFolderPath, profileName)
 }
 
 func (fs *FS) GetGameProfilePath(id int) (string, error) {
@@ -136,4 +130,24 @@ func (fs *FS) GetGameProfilePath(id int) (string, error) {
 
 func (fs *FS) MkDirAll(path string) error {
 	return os.MkdirAll(path, os.ModePerm)
+}
+
+func WriteJSONToFile(filepath string, data any) error {
+	marshalledConfig, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath, marshalledConfig, 0644)
+}
+
+func ReadJSONFromFile[T any](filepath string) (T, error) {
+	var unmarshalledData T
+
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return unmarshalledData, err
+	}
+
+	err = json.Unmarshal(data, &unmarshalledData)
+	return unmarshalledData, err
 }

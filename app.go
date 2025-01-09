@@ -29,7 +29,7 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) domready(ctx context.Context) {
-	runtime.WindowShow(a.ctx)
+	runtime.WindowShow(ctx)
 }
 
 func (a *App) Init() error {
@@ -191,9 +191,7 @@ func (a *App) Play(profileID int, accessToken string) error {
 	defer runtime.EventsOff(a.ctx, "closeGame")
 
 	cmd := exec.CommandContext(cancelCtx, strings.ReplaceAll(commandRaw[0], "{executablePath}", runtimeExecutablePath), command...)
-
 	cmd.Dir = gameClientConfig.Path
-
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	return cmd.Run()
