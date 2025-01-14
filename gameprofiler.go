@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/iverly/go-mcping/api/types"
 	"github.com/iverly/go-mcping/mcping"
 )
@@ -30,16 +29,11 @@ type MinecraftServer struct {
 }
 
 func (gp GameProfiler) RetrieveGameProfiles() ([]GameProfile, error) {
-	response, err := GET(S3StorageBaseUrl+"/gameprofiles.json", StringMap{})
+	response, err := GET[[]GameProfile](S3StorageBaseUrl+"/gameprofiles.json", StringMap{})
 	if err != nil {
 		return nil, err
 	}
-	var gameProfiles []GameProfile
-	err = json.Unmarshal(response, &gameProfiles)
-	if err != nil {
-		return nil, err
-	}
-	return gameProfiles, nil
+	return response, nil
 }
 
 func (gp GameProfiler) PingMinecraftServer(ip string, port uint16) (*types.PingResponse, error) {

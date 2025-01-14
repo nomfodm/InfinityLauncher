@@ -3,7 +3,6 @@ package main
 import (
 	"archive/zip"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -36,18 +35,11 @@ type FileStructureDamage struct {
 }
 
 func FetchGameFilesInfo(gameProfileID int) (FileStructureHashInfo, error) {
-	response, err := GET(fmt.Sprintf(filesJsonS3Location, gameProfileID), StringMap{})
+	response, err := GET[FileStructureHashInfo](fmt.Sprintf(filesJsonS3Location, gameProfileID), StringMap{})
 	if err != nil {
 		return FileStructureHashInfo{}, err
 	}
-
-	var gameFilesInfo FileStructureHashInfo
-	err = json.Unmarshal(response, &gameFilesInfo)
-	if err != nil {
-		return gameFilesInfo, err
-	}
-
-	return gameFilesInfo, nil
+	return response, nil
 }
 
 func GetGameClientFoldersPaths(profileID int, fileSuffix string) (string, string, string, string, string, error) {
