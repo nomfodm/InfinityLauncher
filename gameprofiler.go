@@ -30,7 +30,7 @@ type MinecraftServer struct {
 }
 
 func (gp GameProfiler) RetrieveGameProfiles() ([]GameProfile, error) {
-	response, err := GET(S3StorageBaseUrl+"/gameprofiles.json", Dict{})
+	response, err := GET(S3StorageBaseUrl+"/gameprofiles.json", StringMap{})
 	if err != nil {
 		return nil, err
 	}

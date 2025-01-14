@@ -36,7 +36,7 @@ type FileStructureDamage struct {
 }
 
 func FetchGameFilesInfo(gameProfileID int) (FileStructureHashInfo, error) {
-	response, err := GET(fmt.Sprintf(filesJsonS3Location, gameProfileID), Dict{})
+	response, err := GET(fmt.Sprintf(filesJsonS3Location, gameProfileID), StringMap{})
 	if err != nil {
 		return FileStructureHashInfo{}, err
 	}

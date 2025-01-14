@@ -25,3 +25,16 @@ type ConnectionTestResponse struct {
 	Status     string     `json:"status"`
 	ServerTime *time.Time `json:"serverTime"`
 }
+
+type MinecraftDataResponse struct {
+	AccessToken string `json:"accessToken"`
+	Username    string `json:"username"`
+	UUID        string `json:"uuid"`
+}
+
+type LauncherVersionInformation struct {
+	ActualVersion    string `json:"version"`
+	ActualHashSHA256 string `json:"hash"`
+}
+
+type StringMap map[string]string

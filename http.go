@@ -27,122 +27,111 @@ var (
 	ErrServerIsDown     = errors.New("сервера отключены, возможно проводятся тех.работы")
 )
 
-type MinecraftDataResponse struct {
-	AccessToken string `json:"accessToken"`
-	Username    string `json:"username"`
-	UUID        string `json:"uuid"`
-}
+func GET[T any](url string, headers StringMap) (T, error) {
+	var a T
 
-type LauncherVersionInformation struct {
-	ActualVersion    string `json:"version"`
-	ActualHashSHA256 string `json:"hash"`
-}
-
-type Dict map[string]string
-
-func GET(url string, headers Dict) ([]byte, error) {
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return []byte{}, err
+		return a, err
 	}
 	for key, value := range headers {
 		request.Header.Add(key, value)
 	}
 
-	client := &http.Client{
-		Timeout: time.Second * 3,
-	}
-	response, err := client.Do(request)
+	response, err := doHttpRequest(request)
 	if err != nil {
-		return []byte{}, err
+		return a, err
 	}
 	defer response.Body.Close()
 
-	responseBody, _ := io.ReadAll(response.Body)
-	if response.StatusCode != 200 {
-		var responseBodyJsonError ErrorResponse
-		err := json.Unmarshal(responseBody, &responseBodyJsonError)
-		if err != nil {
-			return []byte{}, err
-		}
-		return []byte{}, errors.New(responseBodyJsonError.Detail)
-	}
-	return responseBody, nil
+	responseBody, err := processResponseBody[T](response)
+	return responseBody, err
 }
 
-func POST(url string, requestBody Dict, headers Dict) ([]byte, error) {
-	requestBodyJsonString, _ := json.Marshal(requestBody)
-	request, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBodyJsonString))
+func POST[T any](url string, requestBody StringMap, headers StringMap) (T, error) {
+	var a T
+
+	requestBodyJsonMarshalled, _ := json.Marshal(requestBody)
+
+	request, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBodyJsonMarshalled))
 	if err != nil {
-		return []byte{}, err
+		return a, err
 	}
 	request.Header.Add("Content-Type", "application/json")
 	for key, value := range headers {
 		request.Header.Add(key, value)
 	}
 
+	response, err := doHttpRequest(request)
+	if err != nil {
+		return a, err
+	}
+	defer response.Body.Close()
+
+	responseBody, err := processResponseBody[T](response)
+	return responseBody, err
+}
+
+func doHttpRequest(request *http.Request) (*http.Response, error) {
 	client := &http.Client{
 		Timeout: 3 * time.Second,
 	}
 	response, err := client.Do(request)
-	if err != nil {
-		return []byte{}, err
-	}
-	defer response.Body.Close()
+	// response.Body need to be closed in parent function
+
+	return response, err
+}
+
+func processResponseBody[T any](response *http.Response) (T, error) {
+	var responseBodyUnmarshalled T
 
 	responseBody, _ := io.ReadAll(response.Body)
 	if response.StatusCode != 200 {
 		var responseBodyJsonError ErrorResponse
 		err := json.Unmarshal(responseBody, &responseBodyJsonError)
 		if err != nil {
-			return []byte{}, err
+			return responseBodyUnmarshalled, err
 		}
-		return []byte{}, errors.New(responseBodyJsonError.Detail)
+		return responseBodyUnmarshalled, errors.New(responseBodyJsonError.Detail)
 	}
-	return responseBody, nil
+
+	err := json.Unmarshal(responseBody, &responseBodyUnmarshalled)
+	return responseBodyUnmarshalled, err
 }
 
 func RequestLogin(username, password string) (string, string, error) {
-	response, err := POST(BaseUrl+"/auth/signin", Dict{"username": username, "password": password}, Dict{})
+	response, err := POST[LoginResponse](BaseUrl+"/auth/signin", StringMap{"username": username, "password": password}, StringMap{})
 	if err != nil {
 		return "", "", err
 	}
-	var unmarshalledResponse LoginResponse
-	err = json.Unmarshal(response, &unmarshalledResponse)
-	return unmarshalledResponse.AccessToken, unmarshalledResponse.RefreshToken, nil
+	return response.AccessToken, response.RefreshToken, nil
 }
 
 func RequestRefresh(refreshToken string) (string, string, error) {
-	response, err := POST(BaseUrl+"/auth/refresh", Dict{"refreshToken": refreshToken}, Dict{})
+	response, err := POST[RefreshResponse](BaseUrl+"/auth/refresh", StringMap{"refreshToken": refreshToken}, StringMap{})
 	if err != nil {
 		return "", "", err
 	}
-	var unmarshalledResponse RefreshResponse
-	err = json.Unmarshal(response, &unmarshalledResponse)
-	return unmarshalledResponse.AccessToken, unmarshalledResponse.RefreshToken, nil
+	return response.AccessToken, response.RefreshToken, nil
 }
 
 func RequestLogout(refreshToken string) (string, error) {
-	response, err := POST(BaseUrl+"/auth/logout", Dict{"refreshToken": refreshToken}, Dict{})
+	response, err := POST[StatusResponse](BaseUrl+"/auth/logout", StringMap{"refreshToken": refreshToken}, StringMap{})
 	if err != nil {
 		return "", err
 	}
-	var unmarshalledResponse StatusResponse
-	err = json.Unmarshal(response, &unmarshalledResponse)
-	return unmarshalledResponse.Status, nil
+	return response.Status, nil
 }
 
 func RequestMe(accessToken string) (User, error) {
-	response, err := GET(BaseUrl+"/user/me", Dict{"Authorization": fmt.Sprintf("Bearer %s", accessToken)})
+	response, err := GET[User](BaseUrl+"/user/me", StringMap{"Authorization": fmt.Sprintf("Bearer %s", accessToken)})
 	if err != nil {
 		return User{}, err
 	}
-	var unmarshalledResponse User
-	err = json.Unmarshal(response, &unmarshalledResponse)
-	return unmarshalledResponse, nil
+	return response, nil
 }
 
-func DownloadFile(cancelCtx context.Context, url string, headers Dict, filepath string, callback func(value, total int64, speed float64)) error {
+func DownloadFile(cancelCtx context.Context, url string, headers StringMap, filepath string, callback func(value, total int64, speed float64)) error {
 	req, err := http.NewRequestWithContext(cancelCtx, http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("ошибка создания запроса: %v", err)
@@ -207,62 +196,45 @@ func DownloadFile(cancelCtx context.Context, url string, headers Dict, filepath 
 }
 
 func RetrieveRunCommand(gameProfileID int) ([]string, error) {
-	response, err := GET(S3StorageBaseUrl+fmt.Sprintf("/%d/run.json", gameProfileID), Dict{})
+	response, err := GET[[]string](S3StorageBaseUrl+fmt.Sprintf("/%d/run.json", gameProfileID), StringMap{})
 	if err != nil {
 		return []string{}, err
 	}
-	var unmarshalledResponse []string
-	err = json.Unmarshal(response, &unmarshalledResponse)
-	return unmarshalledResponse, nil
+	return response, nil
 }
 
 func RequestMinecraftUserData(accessToken string) (MinecraftDataResponse, error) {
-	response, err := GET(BaseUrl+"/game/launcher", Dict{"Authorization": fmt.Sprintf("Bearer %s", accessToken)})
+	response, err := GET[MinecraftDataResponse](BaseUrl+"/game/launcher", StringMap{"Authorization": fmt.Sprintf("Bearer %s", accessToken)})
 	if err != nil {
 		return MinecraftDataResponse{}, err
 	}
-	var unmarshalledResponse MinecraftDataResponse
-	err = json.Unmarshal(response, &unmarshalledResponse)
-	return unmarshalledResponse, nil
+	return response, nil
 }
 
 func RequestLauncherVersionInformation() (LauncherVersionInformation, error) {
-	response, err := GET(BaseUrl+"/launcher/updates", Dict{})
+	response, err := GET[LauncherVersionInformation](BaseUrl+"/launcher/updates", StringMap{})
 	if err != nil {
 		return LauncherVersionInformation{}, err
 	}
-	var unmarshalledResponse LauncherVersionInformation
-	err = json.Unmarshal(response, &unmarshalledResponse)
-	return unmarshalledResponse, nil
+	return response, nil
 }
 
 func TestConnection() error {
-	s3Response, err := GET(connectionTestS3Url, Dict{})
+	s3Response, err := GET[ConnectionTestResponse](connectionTestS3Url, StringMap{})
 	if err != nil {
 		return ErrConnectionFailed
 	}
 
-	var unmarshalledResponse ConnectionTestResponse
-	err = json.Unmarshal(s3Response, &unmarshalledResponse)
-	if err != nil {
-		return ErrConnectionFailed
-	}
-
-	if unmarshalledResponse.Status != "working" {
+	if s3Response.Status != "working" {
 		return ErrServerIsDown
 	}
 
-	backendResponse, err := GET(BaseUrl+"/checkConnection", Dict{})
+	backendResponse, err := GET[ConnectionTestResponse](BaseUrl+"/checkConnection", StringMap{})
 	if err != nil {
 		return ErrConnectionFailed
 	}
 
-	err = json.Unmarshal(backendResponse, &unmarshalledResponse)
-	if err != nil {
-		return ErrConnectionFailed
-	}
-
-	if unmarshalledResponse.Status != "working" {
+	if backendResponse.Status != "working" {
 		return ErrServerIsDown
 	}
 

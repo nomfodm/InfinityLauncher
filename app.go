@@ -75,7 +75,7 @@ func (a *App) DownloadNecessaryParts(profileID int, damage FileStructureDamage) 
 	}
 
 	if damage.AssetsDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", Dict{"message": "assets"})
+		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "assets"})
 		err := a.DownloadFile(fmt.Sprintf(assetsZipUrl, profileID), assetsZipPath)
 		if err != nil {
 			return err
@@ -83,7 +83,7 @@ func (a *App) DownloadNecessaryParts(profileID int, damage FileStructureDamage) 
 	}
 
 	if damage.LibrariesDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", Dict{"message": "libraries"})
+		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "libraries"})
 		err := a.DownloadFile(fmt.Sprintf(librariesZipUrl, profileID), librariesZipPath)
 		if err != nil {
 			return err
@@ -91,7 +91,7 @@ func (a *App) DownloadNecessaryParts(profileID int, damage FileStructureDamage) 
 	}
 
 	if damage.ModsDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", Dict{"message": "mods"})
+		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "mods"})
 		err := a.DownloadFile(fmt.Sprintf(modsZipUrl, profileID), modsZipPath)
 		if err != nil {
 			return err
@@ -99,7 +99,7 @@ func (a *App) DownloadNecessaryParts(profileID int, damage FileStructureDamage) 
 	}
 
 	if damage.RuntimeDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", Dict{"message": "runtime"})
+		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "runtime"})
 		err := a.DownloadFile(fmt.Sprintf(runtimeZipUrl, profileID), runtimeZipPath)
 		if err != nil {
 			return err
@@ -107,7 +107,7 @@ func (a *App) DownloadNecessaryParts(profileID int, damage FileStructureDamage) 
 	}
 
 	if damage.VersionsDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", Dict{"message": "versions"})
+		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "versions"})
 		err := a.DownloadFile(fmt.Sprintf(versionsZipUrl, profileID), versionsZipPath)
 		if err != nil {
 			return err
@@ -144,7 +144,7 @@ func (a *App) DownloadFile(url, filePath string) error {
 		cancel()
 	})
 	defer runtime.EventsOff(a.ctx, "cancel")
-	return DownloadFile(ctx, url, Dict{}, filePath, func(value, total int64, speed float64) {
+	return DownloadFile(ctx, url, StringMap{}, filePath, func(value, total int64, speed float64) {
 		runtime.EventsEmit(a.ctx, "setDownloadProgress", map[string]any{"value": value, "total": total, "speed": speed})
 	})
 }
