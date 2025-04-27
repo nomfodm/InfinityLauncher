@@ -1,0 +1,27 @@
+.buttons {
+    position: fixed;
+
+    top: 0;
+    right: 0;
+    z-index: 9999;
+
+    display: flex;
+    justify-content: flex-end;
+}
+
+.button {
+    width: 30px;
+    height: 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hide:hover {
+    background-color: rgba(26, 29, 74, 0.5);
+}
+
+.close:hover {
+    background-color: #ed4245;
+}

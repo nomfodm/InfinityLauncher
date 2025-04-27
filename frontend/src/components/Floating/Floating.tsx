@@ -2,10 +2,8 @@ import {
   IconExternalLink,
   IconLogin2,
   IconLogout2,
-  IconMinus,
   IconSettings,
   IconUser,
-  IconX,
 } from "@tabler/icons-react";
 import styles from "./Floating.module.css";
 import {Menu, rem} from "@mantine/core";
@@ -15,7 +13,7 @@ import authService from "../../services/auth"
 import { useDisclosure } from "@mantine/hooks";
 import SettingsModal from "../SettingsModal/SettingsModal";
 import LoginModal from "../LoginModal/LoginModal";
-import {BrowserOpenURL, Quit, WindowMinimise} from "../../wailsjs/runtime";
+import {BrowserOpenURL} from "../../wailsjs/runtime";
 import {useAppSelector} from "../../store/hooks"
 import {getPersonalAccountPageUrl, getUserSkinAvatarUrl} from "../../utils/url";
 import {useEffect, useState} from "react";
@@ -71,18 +69,6 @@ export default function Floating() {
 
   return (
     <section className={styles.main}>
-      <div className={styles.buttons}>
-        <button
-          onClick={WindowMinimise}
-          className={`${styles.button} ${styles.hide}`}
-        >
-          <IconMinus width={15} height={15} color="white" />
-        </button>
-
-        <button onClick={Quit} className={`${styles.button} ${styles.close}`}>
-          <IconX width={15} height={15} color="white" />
-        </button>
-      </div>
       <Menu width={220} position="bottom-end">
         <Menu.Target>
           <button className={styles.user}>
