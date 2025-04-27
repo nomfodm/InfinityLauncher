@@ -35,7 +35,7 @@ jobs:
               %infinitylauncher%VERSION%=${{ github.ref_name }}
         
       - name: Build wails
-        uses: dAppServer/wails-build-action@v3
+        uses: dAppServer/wails-build-action@main
         id: build
         with:
           wails-version: "v2.9.2"
