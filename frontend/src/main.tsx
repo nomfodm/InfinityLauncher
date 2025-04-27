@@ -3,23 +3,16 @@ import {createRoot} from 'react-dom/client'
 import "@mantine/core/styles.css"
 import '@mantine/notifications/styles.css';
 import './styles.css'
-import App from './App'
 import {createTheme, MantineProvider, Modal} from "@mantine/core";
-import {HashRouter} from "react-router-dom";
 
 import MantineModal from "./theme/MantineModal.module.css";
 import {Provider} from "react-redux";
 import store from "./store";
-import ErrorPage from "./pages/Error/ErrorPage";
-import SimplifiedHeaderWithoutLink from "./components/SimplifiedHeader/SimplifiedHeaderWithoutLink";
-import FloatingWithoutUser from "./components/Floating/FloatingWithoutUser";
+import CloseMinimiseButtons from "./components/Floating/CloseMinimiseButtons";
 import {Notifications} from "@mantine/notifications";
 import NotificationsClasses from "./theme/Notifications.module.css"
-import {CheckForUpdates, Init} from "./wailsjs/go/main/App";
 import {ModalsProvider} from "@mantine/modals";
-import LauncherUpdatingPage from "./pages/LauncherUpdating/LauncherUpdatingPage";
-import authService from "./services/auth";
-import gameProfiler from "./services/gameProfiler";
+import Start from "./start";
 
 const container = document.getElementById('root')
 const root = createRoot(container!)
@@ -38,51 +31,17 @@ const theme = createTheme({
     }
 })
 
-async function renderMain() {
-    await authService.checkAuth()
-    await gameProfiler.retrieve()
-
-    root.render(
-        <MantineProvider theme={theme} defaultColorScheme={"dark"}>
+root.render(
+    <MantineProvider theme={theme} defaultColorScheme={"dark"}>
+        <Provider store={store}>
+            <CloseMinimiseButtons/>
             <ModalsProvider>
                 <Notifications/>
-                <Provider store={store}>
-                    <HashRouter>
-                        <App/>
-                    </HashRouter>
-                </Provider>
+                <Start/>
             </ModalsProvider>
-        </MantineProvider>
-    )
-}
+        </Provider>
+    </MantineProvider>
+)
 
-Init().then(() => {
-    CheckForUpdates().then((updateFound) => {
-        if (updateFound) {
-            root.render(
-                <MantineProvider theme={theme} defaultColorScheme={"dark"}>
-                    <Provider store={store}>
-                        <SimplifiedHeaderWithoutLink/>
-                        <FloatingWithoutUser/>
-                        <LauncherUpdatingPage/>
-                    </Provider>
-                </MantineProvider>
-            )
-            return
-        }
-        renderMain()
-    }).catch(() => {
-        renderMain()
-    })
-
-}).catch((e) => root.render(
-    <React.StrictMode>
-        <MantineProvider theme={theme} defaultColorScheme={"dark"}>
-            <SimplifiedHeaderWithoutLink/>
-            <FloatingWithoutUser/>
-            <ErrorPage error={`${e}`}/>
-        </MantineProvider>
-    </React.StrictMode>
-))
 
 
