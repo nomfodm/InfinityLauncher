@@ -16,7 +16,6 @@ import (
 )
 
 var (
-	UpdateFound               = errors.New("update found")
 	ErrUpdateExeDoesNotExists = errors.New("update exe does not exists")
 )
 
