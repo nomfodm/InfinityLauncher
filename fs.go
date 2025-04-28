@@ -90,12 +90,22 @@ func (fs *FS) InitGameProfileConfig(id int, profileName string) error {
 			return err
 		}
 
+		err = fs.MkDirAll(config.Path)
+		if err != nil {
+			return err
+		}
+
 		return fs.WriteGameProfileConfig(id, config)
 	}
 
 	gameProfileClientFolderPath := GetGameProfileFolderPath(profileName)
-
 	defaultConfig := GenerateDefaultGameProfileConfig(gameProfileClientFolderPath)
+
+	err := fs.MkDirAll(defaultConfig.Path)
+	if err != nil {
+		return err
+	}
+
 	return fs.WriteGameProfileConfig(id, defaultConfig)
 }
 
