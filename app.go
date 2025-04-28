@@ -193,7 +193,7 @@ func (a *App) Play(profileID int, accessToken string) error {
 
 	cmd := exec.CommandContext(cancelCtx, strings.ReplaceAll(commandRaw[0], "{executablePath}", runtimeExecutablePath), command...)
 	cmd.Dir = gameClientConfig.Path
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmd.SysProcAttr = GameCommandSysProcAttr()
 
 	return cmd.Run()
 }
