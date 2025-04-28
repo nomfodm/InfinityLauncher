@@ -22,7 +22,7 @@
         "name": "Infinity launcher",
         "description": "Infinity Launcher",
         "iconName": "appicon",
-        "role": "Viewer"
+        "role": "None"
       }
     ]
   }
