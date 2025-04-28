@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	"syscall"
 )
 
 type App struct {
@@ -243,10 +242,8 @@ func (a *App) PlayWithoutAccount(profileID int) error {
 	defer runtime.EventsOff(a.ctx, "closeGame")
 
 	cmd := exec.CommandContext(ctx, strings.ReplaceAll(commandRaw[0], "{executablePath}", runtimeExecutablePath), command...)
-
 	cmd.Dir = gameClientConfig.Path
-
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmd.SysProcAttr = GameCommandSysProcAttr()
 
 	return cmd.Run()
 }
