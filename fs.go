@@ -19,11 +19,21 @@ type GameProfileConfig struct {
 }
 
 var (
-	AppFolderPath = path.Join(os.Getenv("APPDATA"), ".infinity")
+	AppFolderPath = path.Join(GetSystemSpecificAppdataFolder(), ".infinity")
 	AppConfigPath = path.Join(AppFolderPath, "config.json")
 
 	GameProfilesConfigFolderPath = path.Join(AppFolderPath, "profiles")
 )
+
+func GetSystemSpecificAppdataFolder() string {
+	systemType := GetSystemType()
+	switch systemType {
+	case "linux":
+		return os.Getenv("HOME")
+	default:
+		return os.Getenv("APPDATA")
+	}
+}
 
 func NewFS() *FS {
 	return &FS{}
