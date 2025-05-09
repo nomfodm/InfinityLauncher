@@ -106,3 +106,24 @@ func HashDir(directory string) (string, []GameFileInfo, error) {
 
 	return dirHash, fileHashes, nil
 }
+
+func AssetsHash(assetsDirectory string) (string, error) {
+	if _, err := os.Stat(assetsDirectory); os.IsNotExist(err) {
+		return "", err
+	}
+
+	sha256filePath := path.Join(assetsDirectory, ".sha256")
+	sha256file, err := os.Open(sha256filePath)
+	if err != nil {
+		return "", err
+	}
+	defer sha256file.Close()
+
+	sha256hash, err := io.ReadAll(sha256file)
+	if err != nil {
+		return "", err
+	}
+
+	return string(sha256hash), nil
+
+}

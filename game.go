@@ -76,7 +76,7 @@ func CheckGameFilesIntegrity(profileID int, filesInfoFromServer FileStructureHas
 		return gameFileStructureDamage, err
 	}
 
-	assetsInfo, _, _ := HashDir(assetsPath)
+	assetsInfo, _ := AssetsHash(assetsPath)
 	librariesInfo, _, _ := HashDir(librariesPath)
 	modsInfo, _, _ := HashDir(modsPath)
 	runtimeInfo, _, _ := HashDir(runtimePath)
