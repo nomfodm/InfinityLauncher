@@ -1,5 +1,4 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
-import {main} from "../wailsjs/go/models";
 
 export enum GameStatus {
     IDLE,
