@@ -11,12 +11,6 @@ import (
 )
 
 var (
-	assetsZipUrl    = S3StorageBaseUrl + "/%d/assets.zip"
-	librariesZipUrl = S3StorageBaseUrl + "/%d/libraries.zip"
-	modsZipUrl      = S3StorageBaseUrl + "/%d/mods.zip"
-	runtimeZipUrl   = S3StorageBaseUrl + "/%d/runtime.zip"
-	versionsZipUrl  = S3StorageBaseUrl + "/%d/versions.zip"
-
 	connectionTestS3Url = S3StorageBaseUrl + "/checkConnection"
 )
 

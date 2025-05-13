@@ -25,8 +25,8 @@ export default function Start() {
 
                 const updateAvailable = await CheckForUpdates()
                 if (updateAvailable) {
-                    setNeedsToUpdate(true)
-                    return
+                    // setNeedsToUpdate(true)
+                    // return
                 }
 
                 await authService.checkAuth()

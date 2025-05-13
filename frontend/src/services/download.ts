@@ -1,21 +1,10 @@
 import store from "../store";
 import {
-    clearDownloadProgressMessage,
-    download,
-    downloadError,
-    downloadExtract,
-    fetch,
-    setDownloadProgress,
-    setDownloadProgressMessage, downloadSuccess, downloadIdle
-} from "../store/download";
-import {
     Play, StartGame, StartGameWithoutAccount,
 } from "../wailsjs/go/main/App";
 import {EventsOff, EventsOn} from "../wailsjs/runtime";
-import {notifications} from "@mantine/notifications";
-import {main} from "../wailsjs/go/models"
 import authService from "./auth";
-import {gameActions, GameStatus} from "../store/game";
+import {gameActions} from "../store/game";
 
 const statuses = [
     gameActions.fetching,

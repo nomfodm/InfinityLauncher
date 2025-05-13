@@ -10,13 +10,6 @@ import (
 	"sync/atomic"
 )
 
-type FileToDownload struct {
-	Path        string `json:"path"`
-	MD5         string `json:"md5"`
-	DownloadURL string `json:"downloadUrl"`
-	Size        int64  `json:"size"`
-}
-
 func downloadFile(ctx context.Context, url, path string, cb ProgressCallback) error {
 	var start int64
 	if info, err := os.Stat(path); err == nil {

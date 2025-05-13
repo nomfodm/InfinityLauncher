@@ -17,10 +17,6 @@ import (
 	"time"
 )
 
-var (
-	filesJsonS3Location = S3StorageBaseUrl + "/%d/files.json"
-)
-
 type ProgressCallback func(total, done int64, status uint, err error)
 
 var (
