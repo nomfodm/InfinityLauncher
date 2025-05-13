@@ -2,308 +2,464 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
+	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
+	"time"
 )
 
 var (
 	filesJsonS3Location = S3StorageBaseUrl + "/%d/files.json"
 )
 
-type FileStructurePart struct {
-	SHA256 string `json:"sha256"`
-}
+type ProgressCallback func(total, done int64, status uint, err error)
 
-type FileStructureHashInfo struct {
-	Assets    FileStructurePart `json:"assets"`
-	Libraries FileStructurePart `json:"libraries"`
-	Mods      FileStructurePart `json:"mods"`
-	Runtime   FileStructurePart `json:"runtime"`
-	Versions  FileStructurePart `json:"versions"`
-}
+var (
+	cacheMutex sync.Mutex
+	md5Cache   = make(map[string]cacheEntry)
+	cacheFile  = "cache.json"
 
-type FileStructureDamage struct {
-	AssetsDamaged    bool `json:"assetsDamaged"`
-	LibrariesDamaged bool `json:"librariesDamaged"`
-	ModsDamaged      bool `json:"modsDamaged"`
-	RuntimeDamaged   bool `json:"runtimeDamaged"`
-	VersionsDamaged  bool `json:"versionsDamaged"`
-}
+	totalBytes int64
+	doneBytes  int64
 
-func FetchGameFilesInfo(gameProfileID int) (FileStructureHashInfo, error) {
-	response, err := GET[FileStructureHashInfo](fmt.Sprintf(filesJsonS3Location, gameProfileID), StringMap{})
-	if err != nil {
-		return FileStructureHashInfo{}, err
-	}
-	return response, nil
-}
+	canceledError = fmt.Errorf("canceled")
+)
 
-func GetGameClientFoldersPaths(profileID int, fileSuffix string) (string, string, string, string, string, error) {
-	fs := NewFS()
-	gameClientFolderPath, err := fs.GetGameProfilePath(profileID)
-	if err != nil {
-		return "", "", "", "", "", err
-	}
+const (
+	fetchingStatus    = 0
+	downloadingStatus = 1
+	preparingStatus   = 2
+	successStatus     = 3
+	errorStatus       = 4
+	canceledStatus    = 5
+)
 
-	assetsPath := path.Join(gameClientFolderPath, "assets"+fileSuffix)
-	librariesPath := path.Join(gameClientFolderPath, "libraries"+fileSuffix)
-	modsPath := path.Join(gameClientFolderPath, "mods"+fileSuffix)
-	runtimePath := path.Join(gameClientFolderPath, "runtime"+fileSuffix)
-	versionsPath := path.Join(gameClientFolderPath, "versions"+fileSuffix)
-	return assetsPath, librariesPath, modsPath, runtimePath, versionsPath, nil
-}
+func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
+	//  := "C:\\Users\\nomfodm\\Desktop\\Infinity\\new downloader\\client"
+	//  := "https://storage.infinityserver.ru/1/manifest.json"
 
-func CheckGameFilesIntegrity(profileID int, filesInfoFromServer FileStructureHashInfo) (FileStructureDamage, error) {
-	var gameFileStructureDamage FileStructureDamage
+	cacheFile = filepath.Join(clientDirectory, "cache.json")
 
-	fs := NewFS()
-	gameClientFolderPath, err := fs.GetGameProfilePath(profileID)
-	if err != nil {
-		return gameFileStructureDamage, err
-	}
+	os.MkdirAll(clientDirectory, os.ModePerm)
 
-	err = fs.MkDirAll(gameClientFolderPath)
-	if err != nil {
-		return gameFileStructureDamage, err
-	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	assetsPath, librariesPath, modsPath, runtimePath, versionsPath, err := GetGameClientFoldersPaths(profileID, "")
-	if err != nil {
-		return gameFileStructureDamage, err
-	}
-
-	assetsInfo, _ := AssetsHash(assetsPath)
-	librariesInfo, _, _ := HashDir(librariesPath)
-	modsInfo, _, _ := HashDir(modsPath)
-	runtimeInfo, _, _ := HashDir(runtimePath)
-	versionsInfo, _, _ := HashDir(versionsPath)
-
-	if assetsInfo != filesInfoFromServer.Assets.SHA256 {
-		gameFileStructureDamage.AssetsDamaged = true
-	}
-
-	if librariesInfo != filesInfoFromServer.Libraries.SHA256 {
-		gameFileStructureDamage.LibrariesDamaged = true
-	}
-
-	if modsInfo != filesInfoFromServer.Mods.SHA256 {
-		gameFileStructureDamage.ModsDamaged = true
-	}
-
-	if runtimeInfo != filesInfoFromServer.Runtime.SHA256 {
-		gameFileStructureDamage.RuntimeDamaged = true
-	}
-
-	if versionsInfo != filesInfoFromServer.Versions.SHA256 {
-		gameFileStructureDamage.VersionsDamaged = true
-	}
-
-	return gameFileStructureDamage, nil
-}
-
-func DeleteDamagedParts(profileID int, damage FileStructureDamage) error {
-	assetsPath, librariesPath, modsPath, runtimePath, versionsPath, err := GetGameClientFoldersPaths(profileID, "")
-	if err != nil {
-		return err
-	}
-
-	if damage.AssetsDamaged {
-		err := os.RemoveAll(assetsPath)
-		if err != nil {
-			return err
+	callback := func(total, done int64, status uint, err error) {
+		if errors.Is(err, canceledError) {
+			cancel()
+			runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
+				"total":  total,
+				"done":   done,
+				"status": canceledStatus,
+				"error":  err.Error(),
+			})
+			return
 		}
-	}
-
-	if damage.LibrariesDamaged {
-		err := os.RemoveAll(librariesPath)
 		if err != nil {
-			return err
+			cancel()
+			runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
+				"total":  total,
+				"done":   done,
+				"status": status,
+				"error":  err.Error(),
+			})
+			return
 		}
+		runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
+			"total":  total,
+			"done":   done,
+			"status": status,
+			"error":  nil,
+		})
 	}
+	throttledCallback := makeThrottledProgress(callback, 300*time.Millisecond)
 
-	if damage.ModsDamaged {
-		err := os.RemoveAll(modsPath)
-		if err != nil {
-			return err
-		}
-	}
+	cancelEventCancel := runtime.EventsOnce(ApplicationContext, "cancel", func(optionalData ...interface{}) {
+		cancel()
+	})
+	defer cancelEventCancel()
 
-	if damage.VersionsDamaged {
-		err := os.RemoveAll(versionsPath)
-		if err != nil {
-			return err
-		}
-	}
+	callback(-1, -1, fetchingStatus, nil)
 
-	if damage.RuntimeDamaged {
-		err := os.RemoveAll(runtimePath)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+	loadCache()
 
-func ExtractNecessaryParts(cancelCtx context.Context, profileID int, damage FileStructureDamage, callback func(filename string, size float64, value int64, total int64)) error {
-	fs := NewFS()
-	gameClientFolderPath, err := fs.GetGameProfilePath(profileID)
+	manifest, err := loadManifest(manifestUrl)
 	if err != nil {
-		return err
-	}
-	assetsZipPath, librariesZipPath, modsZipPath, runtimeZipPath, versionsZipPath, err := GetGameClientFoldersPaths(profileID, ".zip")
-	if err != nil {
-		return err
+		return fmt.Errorf("Ошибка загрузки манифеста: ", err)
 	}
 
-	if damage.AssetsDamaged {
-		err := Unzip(cancelCtx, assetsZipPath, gameClientFolderPath, callback)
-		if err != nil {
-			return err
-		}
+	if err := cleanupExtraFiles(manifest.Required, manifest.HardCheckingFolders, clientDirectory); err != nil {
+		return fmt.Errorf("Ошибка очистки лишних файлов: ", err)
 	}
 
-	if damage.LibrariesDamaged {
-		err := Unzip(cancelCtx, librariesZipPath, gameClientFolderPath, callback)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.ModsDamaged {
-		err := Unzip(cancelCtx, modsZipPath, gameClientFolderPath, callback)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.VersionsDamaged {
-		err := Unzip(cancelCtx, versionsZipPath, gameClientFolderPath, callback)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.RuntimeDamaged {
-		err := Unzip(cancelCtx, runtimeZipPath, gameClientFolderPath, callback)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func Unzip(cancelCtx context.Context, zipPath string, dest string, callback func(filename string, size float64, value int64, total int64)) error {
-	zipFileForInfo, err := os.Open(zipPath)
-	if err != nil {
-		return err
-	}
-	defer zipFileForInfo.Close()
-
-	zipFileInfo, err := zipFileForInfo.Stat()
-	if err != nil {
-		return err
-	}
-
-	zipFile, err := zip.OpenReader(zipPath)
-	if err != nil {
-		return err
-	}
-	defer zipFile.Close()
-
-	var value int64 = 0
-
-	for _, file := range zipFile.File {
-		select {
-		case <-cancelCtx.Done():
-			return fmt.Errorf("unzip canceled")
-		default:
-			callback(file.Name, float64(file.FileInfo().Size())/1024/1024, value/1024/1024, zipFileInfo.Size()/1024/1024)
-
-			filePath := filepath.Join(dest, file.Name)
-
-			fileInfo := file.FileInfo()
-			value += fileInfo.Size()
-
-			if file.FileInfo().IsDir() {
-				if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
-					return err
-				}
+	var requiredFilesToProcess []FileEntry
+	totalBytes = 0
+	doneBytes = 0
+	for _, entry := range manifest.Required {
+		path1 := filepath.Join(clientDirectory, entry.Path)
+		if pathExists(path1) {
+			if ok, err := checkCachedMD5(path1, entry.MD5); err == nil && ok {
 				continue
 			}
+		}
 
-			if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
-				return err
+		atomic.AddInt64(&totalBytes, entry.Size)
+
+		entry.Path = path1
+
+		requiredFilesToProcess = append(requiredFilesToProcess, entry)
+	}
+
+	var foldersToDownloadAndExtract []NonStrictVerifiableFolderEntry
+	for _, entry := range manifest.NonStrictVerifiableFolders {
+		path1 := filepath.Join(clientDirectory, entry.Path)
+		entry.Download.Destination = filepath.Join(clientDirectory, entry.Download.Destination)
+		entry.Path = path1
+		if pathExists(path1) {
+			md5file, err := os.Open(filepath.Join(path1, ".md5"))
+			if os.IsNotExist(err) {
+				atomic.AddInt64(&totalBytes, entry.Download.Size)
+				foldersToDownloadAndExtract = append(foldersToDownloadAndExtract, entry)
+				continue
 			}
-
-			rc, err := file.Open()
 			if err != nil {
 				return err
 			}
-
-			outFile, err := os.Create(filePath)
+			md5bytes, err := io.ReadAll(md5file)
 			if err != nil {
-				rc.Close()
 				return err
 			}
+			md5 := string(md5bytes)
 
-			_, err = io.Copy(outFile, rc)
+			md5file.Close()
 
-			outFile.Close()
-			rc.Close()
-
-			if err != nil {
-				return err
+			if entry.MD5 == md5 {
+				continue
 			}
 		}
 
+		atomic.AddInt64(&totalBytes, entry.Download.Size)
+
+		foldersToDownloadAndExtract = append(foldersToDownloadAndExtract, entry)
+	}
+
+	var nonVerifiableFilesToDownload []FileEntry
+	for _, entry := range manifest.NonVerifiable {
+		path1 := filepath.Join(clientDirectory, entry.Path)
+		if pathExists(path1) {
+			continue
+		}
+
+		atomic.AddInt64(&totalBytes, entry.Size)
+
+		entry.Path = path1
+
+		nonVerifiableFilesToDownload = append(nonVerifiableFilesToDownload, entry)
+	}
+
+	const concurrencyLimit = 4
+	sem := make(chan struct{}, concurrencyLimit)
+	var wg sync.WaitGroup
+
+	for _, entry := range nonVerifiableFilesToDownload {
+		select {
+		case <-ctx.Done():
+			callback(0, 0, canceledStatus, canceledError)
+			return canceledError
+		default:
+		}
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(e FileEntry) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if err := downloadFile(ctx, e.URL, e.Path, throttledCallback); err != nil {
+				callback(0, 0, errorStatus, err)
+			}
+		}(entry)
+	}
+	wg.Wait()
+
+	for _, entry := range requiredFilesToProcess {
+		select {
+		case <-ctx.Done():
+			callback(0, 0, canceledStatus, canceledError)
+			return canceledError
+		default:
+		}
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(e FileEntry) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if err := processRequiredFile(ctx, e, throttledCallback); err != nil {
+				callback(0, 0, errorStatus, err)
+			}
+		}(entry)
+	}
+	wg.Wait()
+
+	for _, entry := range foldersToDownloadAndExtract {
+		select {
+		case <-ctx.Done():
+			callback(0, 0, canceledStatus, canceledError)
+			return canceledError
+		default:
+		}
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(e NonStrictVerifiableFolderEntry) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if err := downloadAndExtractNonStrictFolder(ctx, e, throttledCallback, callback); err != nil {
+				callback(0, 0, errorStatus, err)
+			}
+		}(entry)
+	}
+	wg.Wait()
+
+	saveCache()
+	if ctx.Err() != nil {
+		callback(0, 0, canceledStatus, nil)
+		fmt.Println("Загрузка отменена.")
+	} else {
+		callback(atomic.LoadInt64(&totalBytes), atomic.LoadInt64(&doneBytes), successStatus, nil)
+		fmt.Println("Все файлы загружены, проверены и синхронизированы.")
 	}
 
 	return nil
 }
 
-func CleanUp(profileID int, damage FileStructureDamage) error {
-	assetsZipPath, librariesZipPath, modsZipPath, runtimeZipPath, versionsZipPath, err := GetGameClientFoldersPaths(profileID, ".zip")
+func makeThrottledProgress(cb ProgressCallback, minInterval time.Duration) ProgressCallback {
+	var last time.Time
+	var mu sync.Mutex
+
+	return func(total, done int64, status uint, err error) {
+		mu.Lock()
+		defer mu.Unlock()
+		now := time.Now()
+		if now.Sub(last) < minInterval {
+			return
+		}
+		last = now
+		cb(total, done, status, err)
+	}
+}
+
+func loadManifest(url string) (FileManifest, error) {
+	return GET[FileManifest](url, StringMap{})
+}
+
+func checkCachedMD5(path, expected string) (bool, error) {
+	fi, err := os.Stat(path)
 	if err != nil {
-		return err
+		return false, err
 	}
+	mtime := fi.ModTime().Unix()
+	cacheMutex.Lock()
+	entry, found := md5Cache[path]
+	cacheMutex.Unlock()
+	if found && entry.ModTime == mtime {
+		return entry.MD5 == expected, nil
+	}
+	h, err := computeMD5(path)
+	if err != nil {
+		return false, err
+	}
+	cacheMutex.Lock()
+	md5Cache[path] = cacheEntry{ModTime: mtime, MD5: h}
+	cacheMutex.Unlock()
+	return h == expected, nil
+}
 
-	if damage.AssetsDamaged {
-		err := os.RemoveAll(assetsZipPath)
-		if err != nil {
-			return err
+func cleanupExtraFiles(manifest []FileEntry, roots []string, clientDirectory string) error {
+	allowed := make(map[string]struct{})
+	for _, e := range manifest {
+		path1 := filepath.Join(clientDirectory, e.Path)
+		allowed[path1] = struct{}{}
+	}
+	for _, root := range roots {
+		rootPath := filepath.Join(clientDirectory, root)
+
+		if _, err := os.Stat(rootPath); err != nil {
+			continue
 		}
-	}
-
-	if damage.LibrariesDamaged {
-		err := os.RemoveAll(librariesZipPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.ModsDamaged {
-		err := os.RemoveAll(modsZipPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.VersionsDamaged {
-		err := os.RemoveAll(versionsZipPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.RuntimeDamaged {
-		err := os.RemoveAll(runtimeZipPath)
+		err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			if _, ok := allowed[path]; !ok {
+				if rmErr := os.Remove(path); rmErr != nil {
+					return rmErr
+				}
+			}
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func downloadAndExtractNonStrictFolder(ctx context.Context, folderEntry NonStrictVerifiableFolderEntry, cb ProgressCallback, commmonCB ProgressCallback) error {
+	dest := folderEntry.Download.Destination
+	if ok, _ := verify(dest, folderEntry.Download.MD5); !ok {
+		err := downloadFile(ctx, folderEntry.Download.Url, dest, cb)
+		select {
+		case <-ctx.Done():
+			commmonCB(0, 0, canceledStatus, canceledError)
+			return canceledError
+		default:
+		}
+
+		if ok, _ := verify(dest, folderEntry.Download.MD5); !ok || err != nil {
+			os.Remove(dest)
+			atomic.AddInt64(&totalBytes, folderEntry.Download.Size)
+
+			if err := downloadFile(ctx, folderEntry.Download.Url, dest, cb); err != nil {
+				return err
+			}
+			if ok2, _ := verify(dest, folderEntry.Download.MD5); !ok2 {
+				return fmt.Errorf("файл поврежден даже после полной загрузки: %s", dest)
+			}
+		}
+
+		cb(atomic.LoadInt64(&totalBytes), atomic.LoadInt64(&doneBytes), downloadingStatus, nil)
+	} else {
+		atomic.AddInt64(&totalBytes, -folderEntry.Download.Size)
+	}
+
+	commmonCB(-1, -1, preparingStatus, nil)
+
+	data, err := os.ReadFile(dest)
+	if err != nil {
+		return err
+	}
+
+	r, err := zip.NewReader(bytes.NewReader(data), folderEntry.Download.Size)
+	if err != nil {
+		return err
+	}
+
+	extractionPath := folderEntry.Path
+
+	os.RemoveAll(extractionPath)
+	os.MkdirAll(extractionPath, 0o755)
+
+	clientDirectory := filepath.Dir(folderEntry.Path)
+
+	for _, f := range r.File {
+		select {
+		case <-ctx.Done():
+			return canceledError
+		default:
+		}
+		fp := filepath.Join(clientDirectory, f.Name)
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(fp, f.Mode())
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		os.MkdirAll(filepath.Dir(fp), 0o755)
+		out, err := os.OpenFile(fp, os.O_CREATE|os.O_WRONLY, f.Mode())
+		if err != nil {
+			rc.Close()
+			return err
+		}
+		io.Copy(out, rc)
+		out.Close()
+		rc.Close()
+	}
+
+	err = createMD5FileInNonStrictFolder(folderEntry)
+	if err != nil {
+		return err
+	}
+
+	return os.RemoveAll(dest)
+}
+
+func createMD5FileInNonStrictFolder(folderEntry NonStrictVerifiableFolderEntry) error {
+	return os.WriteFile(filepath.Join(folderEntry.Path, ".md5"), []byte(folderEntry.MD5), 0644)
+}
+
+func processRequiredFile(ctx context.Context, entry FileEntry, cb ProgressCallback) error {
+	select {
+	case <-ctx.Done():
+		return canceledError
+	default:
+	}
+
+	if pathExists(entry.Path) {
+		if ok, err := checkCachedMD5(entry.Path, entry.MD5); err == nil && ok {
+			return nil
+		}
+	}
+
+	err := downloadFile(ctx, entry.URL, entry.Path, cb)
+
+	if ok, _ := verifyAndCache(entry.Path, entry.MD5); !ok || err != nil {
+		os.Remove(entry.Path)
+		atomic.AddInt64(&totalBytes, entry.Size)
+
+		if err := downloadFile(ctx, entry.URL, entry.Path, cb); err != nil {
+			return err
+		}
+		if ok2, _ := verifyAndCache(entry.Path, entry.MD5); !ok2 {
+			return fmt.Errorf("файл поврежден даже после полной загрузки: %s", entry.Path)
+		}
+	}
+	return nil
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func verifyAndCache(path, expected string) (bool, error) {
+	h, err := computeMD5(path)
+	if err != nil {
+		return false, err
+	}
+	fi, _ := os.Stat(path)
+	mtime := fi.ModTime().Unix()
+	cacheMutex.Lock()
+	md5Cache[path] = cacheEntry{ModTime: mtime, MD5: h}
+	cacheMutex.Unlock()
+	return h == expected, nil
+}
+
+func loadCache() {
+	data, err := os.ReadFile(cacheFile)
+	if err != nil {
+		return
+	}
+	cacheMutex.Lock()
+	json.Unmarshal(data, &md5Cache)
+	cacheMutex.Unlock()
+}
+
+func saveCache() {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+	data, err := json.MarshalIndent(md5Cache, "", "  ")
+	if err != nil {
+		return
+	}
+	os.WriteFile(cacheFile, data, 0o644)
 }

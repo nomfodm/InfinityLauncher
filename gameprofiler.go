@@ -21,6 +21,12 @@ type GameProfile struct {
 	CardImgUrl           string          `json:"cardImgUrl"`
 	PageBackgroundImgUrl string          `json:"pageBackgroundImgUrl"`
 	MinecraftServer      MinecraftServer `json:"minecraftServer"`
+
+	Manifest Manifest `json:"manifest"`
+}
+
+type Manifest struct {
+	URL string `json:"url"`
 }
 
 type MinecraftServer struct {

@@ -61,7 +61,7 @@ export default function GameProfileCard({
                 <Loader className={styles.loader} color="white"/>}
             {[DownloadStatus.ERROR].includes(downloadState.status) && downloadState.clientDownloadingID === profile.id &&
                 <Loader className={styles.loader} color="red"/>}
-            {[GameStatus.PLAYING].includes(gameState.status) && gameState.clientIDPlaying === profile.id &&
+            {[GameStatus.PLAYING].includes(gameState.status) && gameState.clientPlayingID === profile.id &&
                 <IconDeviceGamepad2 className={styles.loader} color={"white"}/>}
             <section className={styles.title}>{profile.title}</section>
         </div>
