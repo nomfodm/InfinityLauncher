@@ -133,6 +133,8 @@ func (a *App) StartGame(profileID int, accessToken string) error {
 	cmd.Dir = gameClientConfig.Path
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
+	runtime.EventsEmit(a.ctx, "gameStarted")
+
 	return cmd.Run()
 }
 
@@ -183,6 +185,8 @@ func (a *App) StartGameWithoutAccount(profileID int) error {
 	cmd.Dir = gameClientConfig.Path
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+	runtime.EventsEmit(a.ctx, "gameStarted")
 
 	return cmd.Run()
 }

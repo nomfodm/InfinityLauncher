@@ -62,6 +62,10 @@ class DownloadService {
             }
         })
 
+        EventsOn("gameStarted", () => {
+            store.dispatch(gameActions.playing())
+        })
+
 
         try {
             await Play(profile)
@@ -71,12 +75,11 @@ class DownloadService {
                 throw store.getState().game.error
             }
 
-            store.dispatch(gameActions.playing())
-
             const authState = store.getState().auth
             if (authState.authed) {
                 await authService.checkAuth()
                 const token = localStorage.getItem("token")!
+
                 await StartGame(gameProfileID, token)
             } else {
                 await StartGameWithoutAccount(gameProfileID)
@@ -92,6 +95,7 @@ class DownloadService {
             }
         } finally {
             EventsOff("setProgress")
+            EventsOff("gameStarted")
         }
     }
 }

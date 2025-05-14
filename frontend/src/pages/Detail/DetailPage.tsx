@@ -104,6 +104,9 @@ export default function DetailPage() {
                         {[GameStatus.PLAYING].includes(gameState.status) &&
                             <Button onClick={handleCloseGame} w={rem(150)} className={styles.play_btn}
                                     color={"cyan"}>Закрыть</Button>}
+                        {[GameStatus.DONE].includes(gameState.status) &&
+                            <Button disabled w={rem(180)} className={styles.play_btn}
+                                    color={authState.authed ? "green" : "yellow"}>Запуск игры...</Button>}
                         <Button
                             disabled={[GameStatus.FETCHING, GameStatus.DOWNLOADING, GameStatus.PREPARING, GameStatus.PLAYING].includes(gameState.status)}
                             w={rem(45)} onClick={settingsModalHandlers.open} color={"indigo.9"}
