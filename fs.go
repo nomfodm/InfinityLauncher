@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 type FS struct{}
@@ -19,10 +19,10 @@ type GameProfileConfig struct {
 }
 
 var (
-	AppFolderPath = path.Join(os.Getenv("APPDATA"), ".infinity")
-	AppConfigPath = path.Join(AppFolderPath, "config.json")
+	AppFolderPath = filepath.Join(os.Getenv("APPDATA"), ".infinity")
+	AppConfigPath = filepath.Join(AppFolderPath, "config.json")
 
-	GameProfilesConfigFolderPath = path.Join(AppFolderPath, "profiles")
+	GameProfilesConfigFolderPath = filepath.Join(AppFolderPath, "profiles")
 )
 
 func NewFS() *FS {
@@ -112,11 +112,11 @@ func (fs *FS) ReadGameProfileConfig(id int) (GameProfileConfig, error) {
 }
 
 func GetGameProfileConfigPath(id int) string {
-	return path.Join(GameProfilesConfigFolderPath, fmt.Sprintf("%d.json", id))
+	return filepath.Join(GameProfilesConfigFolderPath, fmt.Sprintf("%d.json", id))
 }
 
 func GetGameProfileFolderPath(profileName string) string {
-	return path.Join(AppFolderPath, profileName)
+	return filepath.Join(AppFolderPath, profileName)
 }
 
 func (fs *FS) GetGameProfilePath(id int) (string, error) {

@@ -4,7 +4,6 @@ import {useNavigate} from "react-router-dom";
 import {main} from "../../wailsjs/go/models";
 import {Loader} from "@mantine/core";
 import {useAppSelector} from "../../store/hooks";
-import {DownloadStatus} from "../../store/download";
 import GameProfile = main.GameProfile;
 import {IconDeviceGamepad2} from "@tabler/icons-react";
 import {GameStatus} from "../../store/game";
@@ -17,7 +16,6 @@ export default function GameProfileCard({
 }) {
     const [online, setOnline] = useState<boolean>(false);
     const navigate = useNavigate();
-    const downloadState = useAppSelector(state => state.download)
     const gameState = useAppSelector(state => state.game)
 
     useEffect(() => {
@@ -57,11 +55,11 @@ export default function GameProfileCard({
                     ></div>
                 </div>
             </section>
-            {[DownloadStatus.FETCHING, DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING].includes(downloadState.status) && downloadState.clientDownloadingID === profile.id &&
+            {[GameStatus.FETCHING, GameStatus.DOWNLOADING, GameStatus.PREPARING].includes(gameState.status) && gameState.clientPlayingID === profile.id &&
                 <Loader className={styles.loader} color="white"/>}
-            {[DownloadStatus.ERROR].includes(downloadState.status) && downloadState.clientDownloadingID === profile.id &&
+            {[GameStatus.ERROR].includes(gameState.status) && gameState.clientPlayingID === profile.id &&
                 <Loader className={styles.loader} color="red"/>}
-            {[GameStatus.PLAYING].includes(gameState.status) && gameState.clientIDPlaying === profile.id &&
+            {[GameStatus.PLAYING].includes(gameState.status) && gameState.clientPlayingID === profile.id &&
                 <IconDeviceGamepad2 className={styles.loader} color={"white"}/>}
             <section className={styles.title}>{profile.title}</section>
         </div>

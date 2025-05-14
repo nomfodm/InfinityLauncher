@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 )
 
@@ -56,7 +55,7 @@ func Update() error {
 		err = selfupdate.Apply(bytes.NewReader(binaryData), selfupdate.Options{
 			Hash:        crypto.SHA256,
 			Checksum:    hash.Sum(nil),
-			OldSavePath: path.Join(AppFolderPath, ".infinity.old"),
+			OldSavePath: filepath.Join(AppFolderPath, ".infinity.old"),
 		})
 
 		if err != nil {

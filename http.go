@@ -2,23 +2,15 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"time"
 )
 
 var (
-	assetsZipUrl    = S3StorageBaseUrl + "/%d/assets.zip"
-	librariesZipUrl = S3StorageBaseUrl + "/%d/libraries.zip"
-	modsZipUrl      = S3StorageBaseUrl + "/%d/mods.zip"
-	runtimeZipUrl   = S3StorageBaseUrl + "/%d/runtime.zip"
-	versionsZipUrl  = S3StorageBaseUrl + "/%d/versions.zip"
-
 	connectionTestS3Url = S3StorageBaseUrl + "/checkConnection"
 )
 
@@ -129,70 +121,6 @@ func RequestMe(accessToken string) (User, error) {
 		return User{}, err
 	}
 	return response, nil
-}
-
-func DownloadFile(cancelCtx context.Context, url string, headers StringMap, filepath string, callback func(value, total int64, speed float64)) error {
-	req, err := http.NewRequestWithContext(cancelCtx, http.MethodGet, url, nil)
-	if err != nil {
-		return fmt.Errorf("ошибка создания запроса: %v", err)
-	}
-
-	fileOnServerInfo, err := http.Head(url)
-	if err != nil {
-		return fmt.Errorf("ошибка создания запроса: %v", err)
-	}
-	defer fileOnServerInfo.Body.Close()
-
-	out, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("ошибка создания файла: %v", err)
-	}
-	defer out.Close()
-
-	outputFileInfo, _ := out.Stat()
-	if outputFileInfo.Size() > 0 {
-		req.Header.Add("Range", fmt.Sprintf("bytes=%d-%d", outputFileInfo.Size(), fileOnServerInfo.ContentLength-1))
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("ошибка скачивания файла: %v", err)
-	}
-	defer resp.Body.Close()
-
-	buf := make([]byte, 1024)
-	prPos := 0
-	predPos := 0
-	startTime := time.Now()
-
-	for {
-		select {
-		case <-cancelCtx.Done():
-			return fmt.Errorf("canceled")
-		default:
-			n, err := resp.Body.Read(buf)
-			if err != nil && err != io.EOF {
-				return fmt.Errorf("canceled")
-			}
-			if n == 0 {
-				return nil
-			}
-
-			if _, err := out.Write(buf[:n]); err != nil {
-				return fmt.Errorf("ошибка записи в файл: %v", err)
-			}
-			duration := time.Since(startTime).Seconds()
-			speed := float64(prPos) / duration / 1024.0 / 1024.0
-			prPos += len(buf[:n])
-
-			if prPos/1024/1024 > predPos/1024/1024 {
-				callback(int64(prPos/1024/1024), resp.ContentLength/1024/1024, speed)
-			}
-
-			predPos = prPos
-
-		}
-	}
 }
 
 func RetrieveRunCommand(gameProfileID int) ([]string, error) {

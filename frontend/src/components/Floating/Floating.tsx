@@ -19,8 +19,8 @@ import {getPersonalAccountPageUrl, getUserSkinAvatarUrl} from "../../utils/url";
 import {useEffect, useState} from "react";
 import store from "../../store";
 import {notifications} from "@mantine/notifications";
-import {DownloadStatus} from "../../store/download";
 import {GetVersion} from "../../wailsjs/go/main/App";
+import {GameStatus} from "../../store/game";
 
 
 export default function Floating() {
@@ -39,8 +39,8 @@ export default function Floating() {
   }, []);
 
   async function handleLogin() {
-    const downloadState = store.getState().download
-    if ([DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING].includes(downloadState.status)) {
+    const gameState = store.getState().game
+    if ([GameStatus.FETCHING, GameStatus.DOWNLOADING, GameStatus.PREPARING].includes(gameState.status)) {
       notifications.show({
         title: "Ошибка",
         message: "Сначала отмените загрузку, а потом только входите в аккаунт!",
@@ -54,8 +54,8 @@ export default function Floating() {
   }
 
   async function handleLogout() {
-    const downloadState = store.getState().download
-    if ([DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING].includes(downloadState.status)) {
+    const gameState = store.getState().game
+    if ([GameStatus.FETCHING, GameStatus.DOWNLOADING, GameStatus.PREPARING].includes(gameState.status)) {
       notifications.show({
         title: "Ошибка",
         message: "Сначала отмените загрузку, а потом выходите из аккаунта!",

@@ -1,76 +1,17 @@
 export namespace main {
 	
-	export class FileStructureDamage {
-	    assetsDamaged: boolean;
-	    librariesDamaged: boolean;
-	    modsDamaged: boolean;
-	    runtimeDamaged: boolean;
-	    versionsDamaged: boolean;
+	export class Manifest {
+	    url: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new FileStructureDamage(source);
+	        return new Manifest(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.assetsDamaged = source["assetsDamaged"];
-	        this.librariesDamaged = source["librariesDamaged"];
-	        this.modsDamaged = source["modsDamaged"];
-	        this.runtimeDamaged = source["runtimeDamaged"];
-	        this.versionsDamaged = source["versionsDamaged"];
+	        this.url = source["url"];
 	    }
 	}
-	export class FileStructurePart {
-	    sha256: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new FileStructurePart(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.sha256 = source["sha256"];
-	    }
-	}
-	export class FileStructureHashInfo {
-	    assets: FileStructurePart;
-	    libraries: FileStructurePart;
-	    mods: FileStructurePart;
-	    runtime: FileStructurePart;
-	    versions: FileStructurePart;
-	
-	    static createFrom(source: any = {}) {
-	        return new FileStructureHashInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.assets = this.convertValues(source["assets"], FileStructurePart);
-	        this.libraries = this.convertValues(source["libraries"], FileStructurePart);
-	        this.mods = this.convertValues(source["mods"], FileStructurePart);
-	        this.runtime = this.convertValues(source["runtime"], FileStructurePart);
-	        this.versions = this.convertValues(source["versions"], FileStructurePart);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
 	export class MinecraftServer {
 	    ip: string;
 	    port: number;
@@ -94,6 +35,7 @@ export namespace main {
 	    cardImgUrl: string;
 	    pageBackgroundImgUrl: string;
 	    minecraftServer: MinecraftServer;
+	    manifest: Manifest;
 	
 	    static createFrom(source: any = {}) {
 	        return new GameProfile(source);
@@ -109,6 +51,7 @@ export namespace main {
 	        this.cardImgUrl = source["cardImgUrl"];
 	        this.pageBackgroundImgUrl = source["pageBackgroundImgUrl"];
 	        this.minecraftServer = this.convertValues(source["minecraftServer"], MinecraftServer);
+	        this.manifest = this.convertValues(source["manifest"], Manifest);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -155,6 +98,7 @@ export namespace main {
 	        this.closeOnGameStart = source["closeOnGameStart"];
 	    }
 	}
+	
 	export class MinecraftCredential {
 	    username: string;
 	    uuid: number[];

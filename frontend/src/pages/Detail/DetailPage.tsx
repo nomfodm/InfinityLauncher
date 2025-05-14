@@ -8,25 +8,37 @@ import {useAppSelector} from "../../store/hooks";
 import GameProfileSettingsModal from "../../components/GameProfileSettingsModal/GameProfileSettingsModal";
 import {useDisclosure} from "@mantine/hooks";
 import store from "../../store";
-import {downloadIdle, DownloadStatus} from "../../store/download";
 import {modals} from "@mantine/modals";
 import InfinitySpanText from "../../components/InfinitySpanText";
 import cx from "clsx";
 import {EventsEmit} from "../../wailsjs/runtime";
 import downloadService from "../../services/download"
-import {gameIdle, GameStatus} from "../../store/game";
+import {gameActions, GameStatus} from "../../store/game";
 
 export default function DetailPage() {
     const {id} = useParams();
     const authState = useAppSelector(state => state.auth)
     const gameProfilesState = useAppSelector(state => state.gameProfiles)
-    const downloadState = useAppSelector(state => state.download)
+    // const downloadState = useAppSelector(state => state.download)
     const gameState = useAppSelector(state => state.game)
 
-    const isCurrentClientDownloading = downloadState.clientDownloadingID === Number(id)
-    const isCurrentClientPlaying = gameState.clientIDPlaying === Number(id)
+    // const isCurrentClientDownloading = downloadState.clientDownloadingID === Number(id)
+    // const isCurrentClientPlaying = gameState.clientPlayingID === Number(id)
 
     const [opened, settingsModalHandlers] = useDisclosure(false);
+
+    function getStatusText(status: GameStatus): string {
+        const statuses = {
+            [GameStatus.IDLE]: "",
+            [GameStatus.FETCHING]: "Получаю файлы игры...",
+            [GameStatus.DOWNLOADING]: "Загрузка...",
+            [GameStatus.PREPARING]: "Подготовка файлов игры...",
+            [GameStatus.DONE]: "",
+            [GameStatus.PLAYING]: "Игра запущена",
+            [GameStatus.ERROR]: gameState.error,
+        }
+        return statuses[status]!
+    }
 
     async function handlePlay() {
         const authState = store.getState().auth
@@ -51,19 +63,18 @@ export default function DetailPage() {
     }
 
     async function play() {
+        store.dispatch(gameActions.idle())
         await downloadService.play(Number(id))
     }
 
     async function handleCancel() {
         EventsEmit("cancel")
-        store.dispatch(gameIdle())
-        store.dispatch(downloadIdle())
+
     }
 
     async function handleCloseGame() {
         EventsEmit("closeGame")
-        store.dispatch(gameIdle())
-        store.dispatch(downloadIdle())
+        store.dispatch(gameActions.idle())
     }
 
     return (
@@ -80,62 +91,29 @@ export default function DetailPage() {
                     <Title w={rem(400)} order={1}>{gameProfilesState.profiles.at(Number(id) - 1)!.title}</Title>
                     <Text w={rem(400)}
                           mt={rem(25)}>{gameProfilesState.profiles.at(Number(id) - 1)!.description}</Text>
-                    {isCurrentClientDownloading && !isCurrentClientPlaying ?
-                        <section className={styles.buttons}>
-                            {[DownloadStatus.IDLE, DownloadStatus.ERROR].includes(downloadState.status) &&
-                                <Button onClick={handlePlay} w={rem(150)} className={styles.play_btn}
-                                        color={authState.authed ? "green" : "yellow"}>Играть</Button>}
-                            {[DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING].includes(downloadState.status) &&
-                                <Button onClick={handleCancel} w={rem(150)} className={styles.play_btn}
-                                        color={"red"}>Отменить</Button>}
-                            {[DownloadStatus.FETCHING].includes(downloadState.status) &&
-                                <Button disabled w={rem(210)} className={styles.play_btn}
-                                        color={"gray"}>Получаю файлы...</Button>}
-                            {[DownloadStatus.SUCCESS].includes(downloadState.status) &&
-                                <Button w={rem(150)} disabled className={styles.play_btn}
-                                        color={authState.authed ? "green" : "yellow"}>Играть</Button>}
-                            <Button
-                                disabled={[DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING, DownloadStatus.FETCHING].includes(downloadState.status)}
-                                w={rem(45)} onClick={settingsModalHandlers.open} color={"indigo.9"}
-                                className={styles.settings_btn}>
-                                <IconSettings width={24} height={24}/>
-                            </Button>
-                        </section>
-                        :
-                        <>
-                            {isCurrentClientPlaying ?
-                                <>
-                                    <section className={styles.buttons}>
-                                        {[GameStatus.IDLE, GameStatus.ERROR].includes(gameState.status) &&
-                                            <Button onClick={handlePlay} w={rem(150)} className={styles.play_btn}
-                                                    color={authState.authed ? "green" : "yellow"}>Играть</Button>}
-                                        {[GameStatus.PLAYING].includes(gameState.status) &&
-                                            <Button onClick={handleCloseGame} w={rem(150)} className={styles.play_btn}
-                                                    color={"cyan"}>Закрыть</Button>}
-                                        <Button
-                                            disabled={[GameStatus.PLAYING].includes(gameState.status)}
-                                            w={rem(45)} onClick={settingsModalHandlers.open} color={"indigo.9"}
-                                            className={styles.settings_btn}>
-                                            <IconSettings width={24} height={24}/>
-                                        </Button>
-                                    </section>
-                                </>
-                                :
-                                <section className={styles.buttons}>
-                                    <Button
-                                        disabled={[DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING, DownloadStatus.FETCHING].includes(downloadState.status) || [GameStatus.PLAYING].includes(gameState.status)}
-                                        onClick={handlePlay} w={rem(150)} className={styles.play_btn}
-                                        color={authState.authed ? "green" : "yellow"}>Играть</Button>
-                                    <Button
-                                        w={rem(45)} onClick={settingsModalHandlers.open} color={"indigo.9"}
-                                        className={styles.settings_btn}>
-                                        <IconSettings width={24} height={24}/>
-                                    </Button>
-                                </section>
-                            }
-                        </>
-
-                    }
+                    <section className={styles.buttons}>
+                        {[GameStatus.IDLE, GameStatus.ERROR].includes(gameState.status) &&
+                            <Button onClick={handlePlay} w={rem(150)} className={styles.play_btn}
+                                    color={authState.authed ? "green" : "yellow"}>Играть</Button>}
+                        {[GameStatus.DOWNLOADING, GameStatus.PREPARING].includes(gameState.status) &&
+                            <Button onClick={handleCancel} w={rem(150)} className={styles.play_btn}
+                                    color={"red"}>Отменить</Button>}
+                        {[GameStatus.FETCHING].includes(gameState.status) &&
+                            <Button disabled w={rem(210)} className={styles.play_btn}
+                                    color={"gray"}>Получаю файлы...</Button>}
+                        {[GameStatus.PLAYING].includes(gameState.status) &&
+                            <Button onClick={handleCloseGame} w={rem(150)} className={styles.play_btn}
+                                    color={"cyan"}>Закрыть</Button>}
+                        {[GameStatus.DONE].includes(gameState.status) &&
+                            <Button disabled w={rem(180)} className={styles.play_btn}
+                                    color={authState.authed ? "green" : "yellow"}>Запуск игры...</Button>}
+                        <Button
+                            disabled={[GameStatus.FETCHING, GameStatus.DOWNLOADING, GameStatus.PREPARING, GameStatus.PLAYING].includes(gameState.status)}
+                            w={rem(45)} onClick={settingsModalHandlers.open} color={"indigo.9"}
+                            className={styles.settings_btn}>
+                            <IconSettings width={24} height={24}/>
+                        </Button>
+                    </section>
 
 
                     {!authState.authed && <Tooltip position={"bottom"} color={"gray"}
@@ -144,43 +122,36 @@ export default function DetailPage() {
                                                        потребуется вход в
                                                        аккаунт</Text>}><Text mt={"xs"} fz={"xs"} c={"dimmed"}>Для игры
                         на сервере требуется вход ⓘ</Text></Tooltip>}
-                    {isCurrentClientDownloading &&
+
+                    <Text style={{overflow: "visible"}} fz={"sm"}
+                          mt={rem(20)}>{getStatusText(gameState.status)}</Text>
+
+                    {[GameStatus.DOWNLOADING].includes(gameState.status) &&
                         <>
-                        {![DownloadStatus.IDLE, DownloadStatus.SUCCESS].includes(downloadState.status) &&
-                                <Text style={{overflow: "visible"}} fz={"sm"}
-                                      mt={rem(20)}>{downloadState.downloadProgress.progressMessage}</Text>}
-                            {[DownloadStatus.DOWNLOADING, DownloadStatus.EXTRACTING, DownloadStatus.ERROR].includes(downloadState.status) &&
-                                <>
-                                    <progress
-                                        max={downloadState.downloadProgress.progressTotal}
-                                        value={downloadState.downloadProgress.progressValue}
-                                        className={cx(styles.progress_bar,
-                                            {[styles.downloading]: downloadState.status === DownloadStatus.DOWNLOADING},
-                                            {[styles.extracting]: downloadState.status === DownloadStatus.EXTRACTING},
-                                            {[styles.error]: downloadState.status === DownloadStatus.ERROR})}
-                                    />
+                            <progress
+                                max={gameState.downloadProgress.done}
+                                value={gameState.downloadProgress.total}
+                                className={cx(styles.progress_bar, {
+                                    [styles.downloading]: gameState.status == GameStatus.DOWNLOADING,
+                                })}
+                            />
 
-                                    <Group w={rem(400)} justify={"space-between"}>
-                                        {![DownloadStatus.ERROR].includes(downloadState.status) &&
-                                            <Text fz={"xs"}
-                                                  c={"dimmed"}>{downloadState.downloadProgress.progressValue} Мб
-                                                / {downloadState.downloadProgress.progressTotal} Мб</Text>}
-                                        {[DownloadStatus.DOWNLOADING].includes(downloadState.status) &&
-                                            <Text fz={"xs"}
-                                                  c={"dimmed"}>{downloadState.downloadProgress.downloadSpeed.toFixed(2)} Мб/с</Text>}
-                                    </Group>
-
-
-                                </>
-                            }
+                            <Group w={rem(400)} justify={"space-between"}>
+                                <Text fz={"xs"}
+                                      c={"dimmed"}>{gameState.downloadProgress.done} Мб
+                                    / {gameState.downloadProgress.total} Мб</Text>
+                                <Text fz={"xs"}
+                                      c={"dimmed"}>123123 Мб/с</Text>
+                            </Group>
                         </>
                     }
 
-                    {isCurrentClientPlaying &&
-                        <>
-                            <Text style={{overflow: "visible"}} fz={"sm"} mt={rem(20)} c={"dimmed"}>{gameState.statusMessage}</Text>
-                        </>
-                    }
+
+                    {/*{isCurrentClientPlaying &&*/}
+                    {/*    <>*/}
+                    {/*        <Text style={{overflow: "visible"}} fz={"sm"} mt={rem(20)} c={"dimmed"}>{gameState.statusMessage}</Text>*/}
+                    {/*    </>*/}
+                    {/*}*/}
 
                 </div>
                 <GameProfileSettingsModal opened={opened} close={settingsModalHandlers.close}

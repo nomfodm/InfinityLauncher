@@ -2,43 +2,73 @@ import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 
 export enum GameStatus {
     IDLE,
+    FETCHING,
+    DOWNLOADING,
+    PREPARING,
     PLAYING,
-    ERROR
+    DONE,
+    ERROR,
 }
 
 interface GameState {
     status: GameStatus;
-    clientIDPlaying?: number;
-    statusMessage: string;
+    clientPlayingID?: number;
+    downloadProgress: DownloadProgress
+    error?: string;
+}
+
+interface DownloadProgress {
+    total: number;
+    done: number;
 }
 
 const initialState: GameState = {
     status: GameStatus.IDLE,
-    clientIDPlaying: undefined,
-    statusMessage: "",
+    clientPlayingID: undefined,
+    downloadProgress: {
+        done: 1,
+        total: 1
+    },
+    error: undefined,
 }
 
 export const gameSlice = createSlice({
     name: "game",
     initialState,
     reducers: {
-        gameIdle: (state) => {
+        idle: (state) => {
             state.status = GameStatus.IDLE
-            state.clientIDPlaying = undefined
         },
-        playing: (state, action: PayloadAction<number>) => {
+        fetching: (state) => {
+            state.status = GameStatus.FETCHING
+        },
+        downloading: (state) => {
+            state.status = GameStatus.DOWNLOADING
+        },
+        preparing: (state) => {
+            state.status = GameStatus.PREPARING
+        },
+        playing: (state) => {
             state.status = GameStatus.PLAYING
-            state.clientIDPlaying = action.payload
         },
-        gameError: (state) => {
+        done: (state) => {
+            state.status = GameStatus.DONE
+        },
+        error: (state) => {
             state.status = GameStatus.ERROR
         },
-        setGameStatusMessage: (state, action: PayloadAction<string>) => {
-            state.statusMessage = action.payload
+        setErrorMessage: (state, action: PayloadAction<string>) => {
+            state.error = action.payload
+        },
+        setClientPlayingID: (state, action: PayloadAction<number>) => {
+            state.clientPlayingID = action.payload
+        },
+        setDownloadProgress: (state, action: PayloadAction<DownloadProgress>) => {
+            state.downloadProgress = action.payload
         }
     }
 })
 
-export const {gameIdle, gameError, setGameStatusMessage, playing} = gameSlice.actions
+export const gameActions = gameSlice.actions
 
 export default gameSlice.reducer

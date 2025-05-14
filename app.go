@@ -9,7 +9,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"math/rand"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 	"syscall"
 )
@@ -18,12 +18,17 @@ type App struct {
 	ctx context.Context
 }
 
+var (
+	ApplicationContext context.Context
+)
+
 func NewApp() *App {
 	return &App{}
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	ApplicationContext = ctx
 
 	runtime.WindowCenter(ctx)
 }
@@ -56,101 +61,34 @@ func (a *App) OpenDirectoryDialog(defaultDirectory string) (string, error) {
 	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{DefaultDirectory: defaultDirectory, Title: "Выберите папку"})
 }
 
-func (a *App) FetchGameFilesInfo(profileID int) (FileStructureHashInfo, error) {
-	return FetchGameFilesInfo(profileID)
-}
+func (a *App) Play(profile GameProfile) error {
+	profileID := int(profile.Id)
 
-func (a *App) CheckGameFilesIntegrity(profileID int, filesInfoFromServer FileStructureHashInfo) (FileStructureDamage, error) {
-	return CheckGameFilesIntegrity(profileID, filesInfoFromServer)
-}
-
-func (a *App) DownloadNecessaryParts(profileID int, damage FileStructureDamage) error {
-	err := a.DeleteDamagedParts(profileID, damage)
+	fs := NewFS()
+	clientDirectory, err := fs.GetGameProfilePath(profileID)
 	if err != nil {
 		return err
 	}
 
-	assetsZipPath, librariesZipPath, modsZipPath, runtimeZipPath, versionsZipPath, err := GetGameClientFoldersPaths(profileID, ".zip")
+	manifestUrl := profile.Manifest.URL
+
+	err = CheckAndFixClientFiles(clientDirectory, manifestUrl)
 	if err != nil {
 		return err
 	}
 
-	if damage.AssetsDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "assets"})
-		err := a.DownloadFile(fmt.Sprintf(assetsZipUrl, profileID), assetsZipPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.LibrariesDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "libraries"})
-		err := a.DownloadFile(fmt.Sprintf(librariesZipUrl, profileID), librariesZipPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.ModsDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "mods"})
-		err := a.DownloadFile(fmt.Sprintf(modsZipUrl, profileID), modsZipPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.RuntimeDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "runtime"})
-		err := a.DownloadFile(fmt.Sprintf(runtimeZipUrl, profileID), runtimeZipPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	if damage.VersionsDamaged {
-		runtime.EventsEmit(a.ctx, "setDownloadProgressMessage", StringMap{"message": "versions"})
-		err := a.DownloadFile(fmt.Sprintf(versionsZipUrl, profileID), versionsZipPath)
-		if err != nil {
-			return err
-		}
-	}
-
+	//fmt.Println(clientDirectory, manifestUrl)
+	//
+	//runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
+	//	"total":  123,
+	//	"done":   1234,
+	//	"status": 0,
+	//	"error":  nil,
+	//})
 	return nil
 }
 
-func (a *App) CleanUp(profileID int, damage FileStructureDamage) error {
-	return CleanUp(profileID, damage)
-}
-
-func (a *App) DeleteDamagedParts(profileID int, damage FileStructureDamage) error {
-	return DeleteDamagedParts(profileID, damage)
-}
-
-func (a *App) ExtractNecessaryParts(profileID int, damage FileStructureDamage) error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	runtime.EventsOnce(a.ctx, "cancel", func(optionalData ...interface{}) {
-		cancel()
-	})
-	defer runtime.EventsOff(a.ctx, "cancel")
-	return ExtractNecessaryParts(ctx, profileID, damage, func(filename string, size float64, value int64, total int64) {
-		runtime.EventsEmit(a.ctx, "setExtractProgress", map[string]any{"filename": filename, "size": size, "value": value, "total": total})
-	})
-}
-
-func (a *App) DownloadFile(url, filePath string) error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	runtime.EventsOnce(a.ctx, "cancel", func(optionalData ...interface{}) {
-		cancel()
-	})
-	defer runtime.EventsOff(a.ctx, "cancel")
-	return DownloadFile(ctx, url, StringMap{}, filePath, func(value, total int64, speed float64) {
-		runtime.EventsEmit(a.ctx, "setDownloadProgress", map[string]any{"value": value, "total": total, "speed": speed})
-	})
-}
-
-func (a *App) Play(profileID int, accessToken string) error {
+func (a *App) StartGame(profileID int, accessToken string) error {
 	commandRaw, err := RetrieveRunCommand(profileID)
 	if err != nil {
 		return err
@@ -167,8 +105,8 @@ func (a *App) Play(profileID int, accessToken string) error {
 		return err
 	}
 
-	runtimeExecutablePath := path.Join("runtime", "java-runtime-gamma", "bin", "java.exe")
-	nativesPath := path.Join(gameClientConfig.Path, "natives")
+	runtimeExecutablePath := filepath.Join("runtime", "java-runtime-gamma", "bin", "java.exe")
+	nativesPath := filepath.Join(gameClientConfig.Path, "natives")
 
 	var command []string
 	if gameClientConfig.Ram != 1024 {
@@ -186,19 +124,21 @@ func (a *App) Play(profileID int, accessToken string) error {
 	cancelCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
+	closeGameEventCancel := runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
 		cancel()
 	})
-	defer runtime.EventsOff(a.ctx, "closeGame")
+	defer closeGameEventCancel()
 
 	cmd := exec.CommandContext(cancelCtx, strings.ReplaceAll(commandRaw[0], "{executablePath}", runtimeExecutablePath), command...)
 	cmd.Dir = gameClientConfig.Path
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
+	runtime.EventsEmit(a.ctx, "gameStarted")
+
 	return cmd.Run()
 }
 
-func (a *App) PlayWithoutAccount(profileID int) error {
+func (a *App) StartGameWithoutAccount(profileID int) error {
 	commandRaw, err := RetrieveRunCommand(profileID)
 	if err != nil {
 		return err
@@ -210,8 +150,8 @@ func (a *App) PlayWithoutAccount(profileID int) error {
 		return err
 	}
 
-	runtimeExecutablePath := path.Join("runtime", "java-runtime-gamma", "bin", "java.exe")
-	nativesPath := path.Join(gameClientConfig.Path, "natives")
+	runtimeExecutablePath := filepath.Join("runtime", "java-runtime-gamma", "bin", "java.exe")
+	nativesPath := filepath.Join(gameClientConfig.Path, "natives")
 
 	letterBytes := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, 10)
@@ -232,21 +172,21 @@ func (a *App) PlayWithoutAccount(profileID int) error {
 		command = append(command, stringToAdd)
 	}
 
-	fmt.Println(command)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
+	closeGameEventCancel := runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
 		cancel()
 	})
-	defer runtime.EventsOff(a.ctx, "closeGame")
+	defer closeGameEventCancel()
 
 	cmd := exec.CommandContext(ctx, strings.ReplaceAll(commandRaw[0], "{executablePath}", runtimeExecutablePath), command...)
 
 	cmd.Dir = gameClientConfig.Path
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+	runtime.EventsEmit(a.ctx, "gameStarted")
 
 	return cmd.Run()
 }
