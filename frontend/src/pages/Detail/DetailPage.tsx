@@ -140,18 +140,9 @@ export default function DetailPage() {
                                 <Text fz={"xs"}
                                       c={"dimmed"}>{gameState.downloadProgress.done} Мб
                                     / {gameState.downloadProgress.total} Мб</Text>
-                                <Text fz={"xs"}
-                                      c={"dimmed"}>123123 Мб/с</Text>
                             </Group>
                         </>
                     }
-
-
-                    {/*{isCurrentClientPlaying &&*/}
-                    {/*    <>*/}
-                    {/*        <Text style={{overflow: "visible"}} fz={"sm"} mt={rem(20)} c={"dimmed"}>{gameState.statusMessage}</Text>*/}
-                    {/*    </>*/}
-                    {/*}*/}
 
                 </div>
                 <GameProfileSettingsModal opened={opened} close={settingsModalHandlers.close}
