@@ -196,7 +196,7 @@ func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
 		go func(e FileEntry) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			if err := processRequiredFile(ctx, e, throttledCallback); err != nil {
+			if err := processRequiredFile(ctx, e, throttledCallback, callback); err != nil {
 				callback(0, 0, errorStatus, err)
 			}
 		}(entry)
@@ -306,13 +306,21 @@ func cleanupExtraFiles(manifest []FileEntry, roots []string, clientDirectory str
 	return nil
 }
 
-func downloadAndExtractNonStrictFolder(ctx context.Context, folderEntry NonStrictVerifiableFolderEntry, cb ProgressCallback, commmonCB ProgressCallback) error {
+func downloadAndExtractNonStrictFolder(ctx context.Context, folderEntry NonStrictVerifiableFolderEntry, cb ProgressCallback, commonCB ProgressCallback) error {
+	select {
+	case <-ctx.Done():
+		commonCB(0, 0, canceledStatus, nil)
+		return canceledError
+	default:
+	}
+
 	dest := folderEntry.Download.Destination
+
 	if ok, _ := verify(dest, folderEntry.Download.MD5); !ok {
 		err := downloadFile(ctx, folderEntry.Download.Url, dest, cb)
 		select {
 		case <-ctx.Done():
-			commmonCB(0, 0, canceledStatus, nil)
+			commonCB(0, 0, canceledStatus, nil)
 			return canceledError
 		default:
 		}
@@ -334,7 +342,7 @@ func downloadAndExtractNonStrictFolder(ctx context.Context, folderEntry NonStric
 		atomic.AddInt64(&totalBytes, -folderEntry.Download.Size)
 	}
 
-	commmonCB(-1, -1, preparingStatus, nil)
+	commonCB(-1, -1, preparingStatus, nil)
 
 	data, err := os.ReadFile(dest)
 	if err != nil {
@@ -356,7 +364,7 @@ func downloadAndExtractNonStrictFolder(ctx context.Context, folderEntry NonStric
 	for _, f := range r.File {
 		select {
 		case <-ctx.Done():
-			commmonCB(0, 0, canceledStatus, nil)
+			commonCB(0, 0, canceledStatus, nil)
 			return canceledError
 		default:
 		}
@@ -392,10 +400,10 @@ func createMD5FileInNonStrictFolder(folderEntry NonStrictVerifiableFolderEntry) 
 	return os.WriteFile(filepath.Join(folderEntry.Path, ".md5"), []byte(folderEntry.MD5), 0644)
 }
 
-func processRequiredFile(ctx context.Context, entry FileEntry, cb ProgressCallback) error {
+func processRequiredFile(ctx context.Context, entry FileEntry, cb ProgressCallback, commonCB ProgressCallback) error {
 	select {
 	case <-ctx.Done():
-		cb(0, 0, canceledStatus, nil)
+		commonCB(0, 0, canceledStatus, nil)
 		return canceledError
 	default:
 	}
@@ -407,6 +415,13 @@ func processRequiredFile(ctx context.Context, entry FileEntry, cb ProgressCallba
 	}
 
 	err := downloadFile(ctx, entry.URL, entry.Path, cb)
+
+	select {
+	case <-ctx.Done():
+		commonCB(0, 0, canceledStatus, nil)
+		return canceledError
+	default:
+	}
 
 	if ok, _ := verifyAndCache(entry.Path, entry.MD5); !ok || err != nil {
 		os.Remove(entry.Path)
