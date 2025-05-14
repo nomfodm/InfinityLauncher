@@ -129,8 +129,8 @@ export default function DetailPage() {
                     {[GameStatus.DOWNLOADING].includes(gameState.status) &&
                         <>
                             <progress
-                                max={gameState.downloadProgress.done}
-                                value={gameState.downloadProgress.total}
+                                max={gameState.downloadProgress.total}
+                                value={gameState.downloadProgress.done}
                                 className={cx(styles.progress_bar, {
                                     [styles.downloading]: gameState.status == GameStatus.DOWNLOADING,
                                 })}
