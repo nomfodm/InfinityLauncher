@@ -63,6 +63,7 @@ export default function DetailPage() {
     }
 
     async function play() {
+        store.dispatch(gameActions.idle())
         await downloadService.play(Number(id))
     }
 
@@ -90,7 +91,6 @@ export default function DetailPage() {
                     <Title w={rem(400)} order={1}>{gameProfilesState.profiles.at(Number(id) - 1)!.title}</Title>
                     <Text w={rem(400)}
                           mt={rem(25)}>{gameProfilesState.profiles.at(Number(id) - 1)!.description}</Text>
-                    {/*{isCurrentClientDownloading && !isCurrentClientPlaying ?*/}
                     <section className={styles.buttons}>
                         {[GameStatus.IDLE, GameStatus.ERROR].includes(gameState.status) &&
                             <Button onClick={handlePlay} w={rem(150)} className={styles.play_btn}

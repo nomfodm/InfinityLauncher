@@ -170,8 +170,6 @@ func (a *App) StartGameWithoutAccount(profileID int) error {
 		command = append(command, stringToAdd)
 	}
 
-	fmt.Println(command)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

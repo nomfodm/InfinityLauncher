@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
@@ -51,18 +50,17 @@ func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
 	defer cancel()
 
 	callback := func(total, done int64, status uint, err error) {
-		if errors.Is(err, canceledError) {
-			cancel()
-			runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
-				"total":  total,
-				"done":   done,
-				"status": canceledStatus,
-				"error":  err.Error(),
-			})
-			return
-		}
+		//if errors.Is(err, canceledError) {
+		//	cancel()
+		//	runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
+		//		"total":  total,
+		//		"done":   done,
+		//		"status": canceledStatus,
+		//		"error":  err.Error(),
+		//	})
+		//	return
+		//}
 		if err != nil {
-			cancel()
 			runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
 				"total":  total,
 				"done":   done,
@@ -170,7 +168,7 @@ func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
 	for _, entry := range nonVerifiableFilesToDownload {
 		select {
 		case <-ctx.Done():
-			callback(0, 0, canceledStatus, canceledError)
+			callback(0, 0, canceledStatus, nil)
 			return canceledError
 		default:
 		}
@@ -189,7 +187,7 @@ func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
 	for _, entry := range requiredFilesToProcess {
 		select {
 		case <-ctx.Done():
-			callback(0, 0, canceledStatus, canceledError)
+			callback(0, 0, canceledStatus, nil)
 			return canceledError
 		default:
 		}
@@ -208,7 +206,7 @@ func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
 	for _, entry := range foldersToDownloadAndExtract {
 		select {
 		case <-ctx.Done():
-			callback(0, 0, canceledStatus, canceledError)
+			callback(0, 0, canceledStatus, nil)
 			return canceledError
 		default:
 		}
@@ -314,7 +312,7 @@ func downloadAndExtractNonStrictFolder(ctx context.Context, folderEntry NonStric
 		err := downloadFile(ctx, folderEntry.Download.Url, dest, cb)
 		select {
 		case <-ctx.Done():
-			commmonCB(0, 0, canceledStatus, canceledError)
+			commmonCB(0, 0, canceledStatus, nil)
 			return canceledError
 		default:
 		}
@@ -358,6 +356,7 @@ func downloadAndExtractNonStrictFolder(ctx context.Context, folderEntry NonStric
 	for _, f := range r.File {
 		select {
 		case <-ctx.Done():
+			commmonCB(0, 0, canceledStatus, nil)
 			return canceledError
 		default:
 		}
@@ -396,6 +395,7 @@ func createMD5FileInNonStrictFolder(folderEntry NonStrictVerifiableFolderEntry) 
 func processRequiredFile(ctx context.Context, entry FileEntry, cb ProgressCallback) error {
 	select {
 	case <-ctx.Done():
+		cb(0, 0, canceledStatus, nil)
 		return canceledError
 	default:
 	}

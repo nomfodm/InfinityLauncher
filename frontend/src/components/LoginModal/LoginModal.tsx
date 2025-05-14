@@ -77,6 +77,7 @@ export default function LoginModal({
                 size: 15,
                 icon: <IconX/>,
             }}
+            zIndex={10000}
             transitionProps={{transition: 'fade', duration: 200, timingFunction: 'ease-out'}}
             closeOnClickOutside={false}
             fullScreen
