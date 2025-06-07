@@ -61,6 +61,14 @@ func (a *App) OpenDirectoryDialog(defaultDirectory string) (string, error) {
 	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{DefaultDirectory: defaultDirectory, Title: "Выберите папку"})
 }
 
+func (a *App) GetOptionalFiles(profile GameProfile) ([]OptionalFileEntry, error) {
+	manifest, err := loadManifest(profile.Manifest.URL)
+	if err != nil {
+		return []OptionalFileEntry{}, fmt.Errorf("Ошибка загрузки манифеста: ", err)
+	}
+	return manifest.OptionalFiles, nil
+}
+
 func (a *App) Play(profile GameProfile) error {
 	profileID := int(profile.Id)
 
@@ -70,9 +78,7 @@ func (a *App) Play(profile GameProfile) error {
 		return err
 	}
 
-	manifestUrl := profile.Manifest.URL
-
-	err = CheckAndFixClientFiles(clientDirectory, manifestUrl)
+	err = CheckAndFixClientFiles(clientDirectory, profile)
 	if err != nil {
 		return err
 	}

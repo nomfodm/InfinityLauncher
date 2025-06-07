@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
-	"io/fs"
+	fs_ "io/fs"
 	"os"
 	"path/filepath"
 	"sync"
@@ -38,10 +38,7 @@ const (
 	canceledStatus    = 5
 )
 
-func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
-	//  := "C:\\Users\\nomfodm\\Desktop\\Infinity\\new downloader\\client"
-	//  := "https://storage.infinityserver.ru/1/manifest.json"
-
+func CheckAndFixClientFiles(clientDirectory string, gameProfile GameProfile) error {
 	cacheFile = filepath.Join(clientDirectory, "cache.json")
 
 	os.MkdirAll(clientDirectory, os.ModePerm)
@@ -50,16 +47,6 @@ func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
 	defer cancel()
 
 	callback := func(total, done int64, status uint, err error) {
-		//if errors.Is(err, canceledError) {
-		//	cancel()
-		//	runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
-		//		"total":  total,
-		//		"done":   done,
-		//		"status": canceledStatus,
-		//		"error":  err.Error(),
-		//	})
-		//	return
-		//}
 		if err != nil {
 			runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
 				"total":  total,
@@ -87,9 +74,35 @@ func CheckAndFixClientFiles(clientDirectory, manifestUrl string) error {
 
 	loadCache()
 
+	manifestUrl := gameProfile.Manifest.URL
 	manifest, err := loadManifest(manifestUrl)
 	if err != nil {
 		return fmt.Errorf("Ошибка загрузки манифеста: ", err)
+	}
+
+	fs := NewFS()
+	config, err := fs.ReadGameProfileConfig(int(gameProfile.Id))
+	if err != nil {
+		return fmt.Errorf("Ошибка чтения конфига профиля: ", err)
+	}
+
+	selectedOptionalFiles := config.OptionalFilesEnabled
+	for entry, enabled := range selectedOptionalFiles {
+		if enabled {
+			for _, optionalFile := range manifest.OptionalFiles {
+				if entry == optionalFile.MD5 {
+					fileEntry := FileEntry{
+						URL:  optionalFile.URL,
+						Path: optionalFile.Path,
+						MD5:  optionalFile.MD5,
+						Size: optionalFile.Size,
+					}
+					manifest.Required = append(manifest.Required, fileEntry)
+
+					break
+				}
+			}
+		}
 	}
 
 	if err := cleanupExtraFiles(manifest.Required, manifest.HardCheckingFolders, clientDirectory); err != nil {
@@ -288,12 +301,12 @@ func cleanupExtraFiles(manifest []FileEntry, roots []string, clientDirectory str
 		if _, err := os.Stat(rootPath); err != nil {
 			continue
 		}
-		err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		err := filepath.WalkDir(rootPath, func(path string, d fs_.DirEntry, err error) error {
 			if err != nil || d.IsDir() {
 				return nil
 			}
 			if _, ok := allowed[path]; !ok {
-				if rmErr := os.Remove(path); rmErr != nil {
+				if rmErr := os.RemoveAll(path); rmErr != nil {
 					return rmErr
 				}
 			}

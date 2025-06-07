@@ -1,7 +1,7 @@
-import {Box, Modal, Paper, rem, Slider, Text} from "@mantine/core";
+import {Box, Modal, NumberInput, Paper, Slider, Text} from "@mantine/core";
 import {IconX} from "@tabler/icons-react";
 import {useEffect, useState} from "react";
-import {InitGameProfileConfig, MkDirAll, ReadGameProfileConfig, WriteGameProfileConfig} from "../../wailsjs/go/main/FS";
+import {MkDirAll, ReadGameProfileConfig, WriteGameProfileConfig} from "../../wailsjs/go/main/FS";
 import {main} from "../../wailsjs/go/models";
 import styles from "./GameProfileSettingsModal.module.css"
 import {GetTotalRAMInMB} from "../../wailsjs/go/main/System";
@@ -26,7 +26,6 @@ export default function GameProfileSettingsModal({
 
     useEffect(() => {
         async function asyncWrapper() {
-            await InitGameProfileConfig(profile.id, profile.name)
             const totalRAM = await GetTotalRAMInMB();
             setTotalRAM(floorRamValue(totalRAM - 2 * 1024))
 
@@ -52,7 +51,13 @@ export default function GameProfileSettingsModal({
         setGamePath(newPath)
     }
 
-    async function handleRAMChange(value: number) {
+    async function handleRAMChange(valueRaw: number | string) {
+        let value = Number(valueRaw)
+        console.log(value)
+        if (value <= 1024) {
+            value = 1024
+        }
+        setRAM(value)
         if (ram === value) {
             return
         }
@@ -81,20 +86,30 @@ export default function GameProfileSettingsModal({
             <Paper bg={"none"} p={"sm"}>
                 <Text>Оперативная
                     память: {ram > 1024 ? `${ram} Mb / ${totalRam} Mb` : "автоматически".toUpperCase()}</Text>
-                <Box className={styles.noDrag} mt={"xs"} w={"100%"} h={rem(50)}>
+                <Box className={styles.noDrag} mt={"xs"} w={"100%"}>
                     <Slider
                         min={1024}
                         max={totalRam}
                         value={ram}
                         step={256}
-                        h={"100%"}
                         onChange={(value) => setRAM(value)}
                         onChangeEnd={handleRAMChange}
                         marks={Array.from({length: totalRam / 1024}).map((_, index) => ({
                             value: (index + 1) * 1024,
-                            label: `${index + 1}GB`
                         }))}
                         className={cx(styles.slider)}
+                    />
+                    <NumberInput
+                        mt={"xs"}
+                        color={"white"}
+                        min={1024}
+                        clampBehavior="strict"
+                        max={totalRam}
+                        value={ram == 1024 ? "" : ram}
+                        suffix={"MB"}
+                        w={"35%"}
+                        placeholder={"АВТОМАТИЧЕСКИ"}
+                        onChange={handleRAMChange}
                     />
                 </Box>
 

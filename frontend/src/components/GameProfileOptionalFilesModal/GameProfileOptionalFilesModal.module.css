@@ -1,0 +1,22 @@
+.setting {
+  display: flex;
+
+  align-items: center;
+  column-gap: 10px;
+}
+
+.setting span {
+  font-size: 14px;
+}
+
+.slider * {
+  overflow: visible;
+}
+
+.noDrag, .noDrag * {
+  --wails-draggable: no-drag;
+}
+
+.markLabel {
+  overflow: visible;
+}
