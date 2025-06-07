@@ -16,7 +16,7 @@ var (
 
 var (
 	ErrConnectionFailed = errors.New("не удалось подключиться к серверам Infinity")
-	ErrServerIsDown     = errors.New("сервера отключены, возможно проводятся тех.работы")
+	ErrMaintenance      = errors.New("проводятся тех.работы")
 )
 
 func GET[T any](url string, headers StringMap) (T, error) {
@@ -153,8 +153,12 @@ func TestConnection() error {
 		return ErrConnectionFailed
 	}
 
+	if s3Response.Status == "maintenance" {
+		return ErrMaintenance
+	}
+
 	if s3Response.Status != "working" {
-		return ErrServerIsDown
+		return ErrConnectionFailed
 	}
 
 	backendResponse, err := GET[ConnectionTestResponse](BaseUrl+"/checkConnection", StringMap{})
@@ -163,7 +167,11 @@ func TestConnection() error {
 	}
 
 	if backendResponse.Status != "working" {
-		return ErrServerIsDown
+		return ErrConnectionFailed
+	}
+
+	if backendResponse.Status == "maintenance" {
+		return ErrMaintenance
 	}
 
 	return nil
