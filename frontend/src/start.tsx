@@ -9,6 +9,11 @@ import App from "./App";
 import authService from "./services/auth";
 import gameProfiler from "./services/gameProfiler";
 
+function capitalizeWord(word: string): string {
+    if (!word) return ""
+    return word[0].toUpperCase() + word.substring(1);
+}
+
 export default function Start() {
     const [isLoading, setIsLoading] = useState(true);
     const [needsToUpdate, setNeedsToUpdate] = useState(false);
@@ -18,7 +23,7 @@ export default function Start() {
 
     useEffect(() => {
         async function wrapper() {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 200));
 
             try {
                 await Init();
@@ -61,7 +66,7 @@ export default function Start() {
                                         <SimplifiedHeaderWithoutLink/>
                                         {isLoading
                                             ? <Loader color="blue"/>
-                                            : <Text fz={"xl"} ta={"center"}>{error}</Text>}
+                                            : <Text fz={"xl"} ta={"center"}>{capitalizeWord(error)}</Text>}
                                     </>
                                 }}
                 />

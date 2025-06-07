@@ -44,6 +44,7 @@ type FileManifest struct {
 	NonStrictVerifiableFolders []NonStrictVerifiableFolderEntry `json:"nonStrictVerifiableFolders"`
 	HardCheckingFolders        []string                         `json:"hardCheckingFolders"`
 	NonVerifiable              []FileEntry                      `json:"nonVerifiable"`
+	OptionalFiles              []OptionalFileEntry              `json:"optionalFiles"`
 }
 
 type NonStrictVerifiableFolderEntry struct {
@@ -64,6 +65,22 @@ type FileEntry struct {
 	Path string `json:"path"`
 	MD5  string `json:"md5"`
 	Size int64  `json:"size"`
+}
+
+type OptionalFileEntry struct {
+	URL          string       `json:"downloadUrl"`
+	Path         string       `json:"path"`
+	MD5          string       `json:"md5"`
+	Size         int64        `json:"size"`
+	LauncherData launcherData `json:"launcherData"`
+}
+
+type launcherData struct {
+	Type             string `json:"type"`
+	TypeMantineColor string `json:"typeMantineColor"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	DefaultEnabled   bool   `json:"defaultEnabled"`
 }
 
 type cacheEntry struct {

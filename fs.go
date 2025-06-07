@@ -14,8 +14,9 @@ type LauncherConfig struct {
 }
 
 type GameProfileConfig struct {
-	Ram  int64  `json:"ram"`
-	Path string `json:"path"`
+	Ram                  int64           `json:"ram"`
+	Path                 string          `json:"path"`
+	OptionalFilesEnabled map[string]bool `json:"optionalFilesEnabled"`
 }
 
 var (
@@ -90,7 +91,7 @@ func (fs *FS) InitGameProfileConfig(id int, profileName string) error {
 }
 
 func GenerateDefaultGameProfileConfig(gameProfileClientFolderPath string) GameProfileConfig {
-	return GameProfileConfig{Path: gameProfileClientFolderPath, Ram: 1024}
+	return GameProfileConfig{Path: gameProfileClientFolderPath, Ram: 1024, OptionalFilesEnabled: map[string]bool{}}
 }
 
 func GameProfileConfigFileExists(id int) bool {

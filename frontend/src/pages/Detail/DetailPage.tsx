@@ -1,8 +1,8 @@
-import {CSSProperties} from "react";
+import {CSSProperties, useEffect, useState} from "react";
 import AnimatedPage from "../../components/AnimatedPage/AnimatedPage";
 import styles from "./DetailPage.module.css";
 import {useParams} from "react-router-dom";
-import {IconSettings} from "@tabler/icons-react";
+import {IconEdit, IconSettings} from "@tabler/icons-react";
 import {Button, Group, rem, Text, Title, Tooltip} from "@mantine/core";
 import {useAppSelector} from "../../store/hooks";
 import GameProfileSettingsModal from "../../components/GameProfileSettingsModal/GameProfileSettingsModal";
@@ -14,18 +14,29 @@ import cx from "clsx";
 import {EventsEmit} from "../../wailsjs/runtime";
 import downloadService from "../../services/download"
 import {gameActions, GameStatus} from "../../store/game";
+import GameProfileOptionalFilesModal
+    from "../../components/GameProfileOptionalFilesModal/GameProfileOptionalFilesModal";
+import {InitGameProfileConfig} from "../../wailsjs/go/main/FS";
 
 export default function DetailPage() {
     const {id} = useParams();
     const authState = useAppSelector(state => state.auth)
     const gameProfilesState = useAppSelector(state => state.gameProfiles)
-    // const downloadState = useAppSelector(state => state.download)
     const gameState = useAppSelector(state => state.game)
 
-    // const isCurrentClientDownloading = downloadState.clientDownloadingID === Number(id)
-    // const isCurrentClientPlaying = gameState.clientPlayingID === Number(id)
+    const [settingsOpened, settingsModalHandlers] = useDisclosure(false);
+    const [optionalFilesSettingsOpened, optionalFilesModalHandlers] = useDisclosure(false);
 
-    const [opened, settingsModalHandlers] = useDisclosure(false);
+    const [initialized, setInitialized] = useState<boolean>(false)
+
+    useEffect(() => {
+        async function wrapper() {
+            await InitGameProfileConfig(Number(id), gameProfilesState.profiles.at(Number(id) - 1)!.name)
+            setInitialized(true)
+        }
+
+        wrapper()
+    }, []);
 
     function getStatusText(status: GameStatus): string {
         const statuses = {
@@ -79,7 +90,7 @@ export default function DetailPage() {
 
     return (
         <AnimatedPage>
-            {gameProfilesState.retrieved && <main
+            {initialized && gameProfilesState.retrieved && <main
                 className={styles.main}
                 style={
                     {
@@ -108,11 +119,18 @@ export default function DetailPage() {
                             <Button disabled w={rem(180)} className={styles.play_btn}
                                     color={authState.authed ? "green" : "yellow"}>Запуск игры...</Button>}
                         <Button
-                            disabled={[GameStatus.FETCHING, GameStatus.DOWNLOADING, GameStatus.PREPARING, GameStatus.PLAYING].includes(gameState.status)}
+                            disabled={[GameStatus.FETCHING, GameStatus.DOWNLOADING, GameStatus.PREPARING, GameStatus.PLAYING, GameStatus.DONE].includes(gameState.status)}
                             w={rem(45)} onClick={settingsModalHandlers.open} color={"indigo.9"}
                             className={styles.settings_btn}>
                             <IconSettings width={24} height={24}/>
                         </Button>
+                        <Button
+                            disabled={[GameStatus.FETCHING, GameStatus.DOWNLOADING, GameStatus.PREPARING, GameStatus.PLAYING, GameStatus.DONE].includes(gameState.status)}
+                            w={rem(45)} onClick={optionalFilesModalHandlers.open} color={"gray.7"}
+                            className={styles.settings_btn}>
+                            <IconEdit width={24} height={24}/>
+                        </Button>
+
                     </section>
 
 
@@ -145,11 +163,14 @@ export default function DetailPage() {
                     }
 
                 </div>
-                <GameProfileSettingsModal opened={opened} close={settingsModalHandlers.close}
+                <GameProfileSettingsModal opened={settingsOpened} close={settingsModalHandlers.close}
                                           profile={gameProfilesState.profiles.at(Number(id) - 1)!}/>
+                <GameProfileOptionalFilesModal opened={optionalFilesSettingsOpened} close={optionalFilesModalHandlers.close}
+                                               profile={gameProfilesState.profiles.at(Number(id) - 1)!}/>
             </main>}
             {!gameProfilesState.retrieved && <Text mt={rem(100)} fz={"xl"}>Получаю игровые режимы...</Text>}
 
         </AnimatedPage>
+
     );
 }
