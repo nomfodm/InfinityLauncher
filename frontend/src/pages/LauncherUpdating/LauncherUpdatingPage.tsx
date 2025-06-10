@@ -51,11 +51,13 @@ export default function LauncherUpdatingPage() {
             <main onClick={!launcherUpdatingState.updating ? update : undefined} className={styles.main}>
                 {launcherUpdatingState.error ?
                     <Box ta={"center"} mt={rem(130)}>
-                        <Text fw={"600"} fz={"h2"} ta={"center"}>Ошибка обновления</Text>
                         <AnimatePresence>
                             <motion.div exit={{opacity: 0}} animate={{opacity: 1}} initial={{opacity: 0}}>
-                                <Text c={"dimmed"} fz={"sm"}>
-                                    Вы можете скачать актуальную версию вручную по ссылке:
+                                <Text fz={"md"}>
+                                    В данный момент могло произойти обновление системы версий лаунчера,
+                                </Text>
+                                <Text fz={"md"}>
+                                    чтобы обновиться, скачайте актуальную версию вручную по ссылке:
                                 </Text>
                                 <Anchor component={"div"} onClick={() => BrowserOpenURL(getLauncherDownloadUrl())} fz={"md"}>
                                     infinityserver.ru/launcher
