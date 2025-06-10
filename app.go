@@ -198,7 +198,7 @@ func (a *App) StartGameWithoutAccount(profileID int) error {
 }
 
 func (a *App) CheckForUpdates() (bool, error) {
-	return CheckForUpdates()
+	return IsUpdateAvailable()
 }
 
 func (a *App) Update() error {

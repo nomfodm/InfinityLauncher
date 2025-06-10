@@ -1,7 +1,7 @@
 import styles from "./LauncherUpdatingPage.module.css";
 import {Anchor, Box, rem, Text} from "@mantine/core";
 import AnimatedPage from "../../components/AnimatedPage/AnimatedPage";
-import {useCallback, useEffect} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {AnimatePresence, motion} from "motion/react"
 import {RestartApp, Update} from "../../wailsjs/go/main/App";
 import {BrowserOpenURL} from "../../wailsjs/runtime";
@@ -16,6 +16,7 @@ import {
 
 export default function LauncherUpdatingPage() {
     const launcherUpdatingState = useAppSelector(state => state.launcherUpdate)
+    const [err, setErr] = useState("")
 
     const update = useCallback(async () => {
         if (launcherUpdatingState.updating) return
@@ -30,6 +31,7 @@ export default function LauncherUpdatingPage() {
             await RestartApp()
         } catch (e) {
             console.log(e)
+            setErr(`${e}`)
             store.dispatch(setLauncherUpdateError(true))
         }
     }, [launcherUpdatingState.updating])
@@ -51,17 +53,20 @@ export default function LauncherUpdatingPage() {
             <main onClick={!launcherUpdatingState.updating ? update : undefined} className={styles.main}>
                 {launcherUpdatingState.error ?
                     <Box ta={"center"} mt={rem(130)}>
+                        <Text fw={"600"} fz={"h2"} ta={"center"}>Ошибка обновления</Text>
                         <AnimatePresence>
                             <motion.div exit={{opacity: 0}} animate={{opacity: 1}} initial={{opacity: 0}}>
-                                <Text fz={"md"}>
-                                    В данный момент могло произойти обновление системы версий лаунчера,
-                                </Text>
-                                <Text fz={"md"}>
-                                    чтобы обновиться, скачайте актуальную версию вручную по ссылке:
+                                <Text c={"dimmed"} fz={"sm"}>
+                                    Попробуйте перезапустить лаунчер или скачайте<br/>актуальную версию вручную по
+                                    ссылке:
                                 </Text>
                                 <Anchor component={"div"} onClick={() => BrowserOpenURL(getLauncherDownloadUrl())} fz={"md"}>
                                     infinityserver.ru/launcher
                                 </Anchor>
+
+                                <Text c={"dimmed"} fz={"xs"} mt={rem(200)}>
+                                    Ошибка: {err}
+                                </Text>
                             </motion.div>
                         </AnimatePresence>
                     </Box>

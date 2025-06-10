@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/sha256"
-	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/minio/selfupdate"
 	"io"
 	"net/http"
@@ -18,8 +18,8 @@ var (
 	ErrUpdateExeDoesNotExists = errors.New("update exe does not exists")
 )
 
-func RetrieveUpdateBinaryData() ([]byte, error) {
-	resp, err := http.Get(ActualLauncherBinaryUrl)
+func RetrieveUpdateBinaryData(url string) ([]byte, error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +37,17 @@ func RetrieveUpdateBinaryData() ([]byte, error) {
 }
 
 func Update() error {
-	isUpdatesFound, err := CheckForUpdates()
+	isUpdatesFound, err := IsUpdateAvailable()
 	if err != nil {
 		return err
 	}
 	if isUpdatesFound {
-		binaryData, err := RetrieveUpdateBinaryData()
+		actualLauncherVersion, err := RequestActualLauncherVersion()
+		if err != nil {
+			return errors.New("cantcheckupdate")
+		}
+
+		binaryData, err := RetrieveUpdateBinaryData(actualLauncherVersion.DownloadUrl)
 		if err != nil {
 			return err
 		}
@@ -68,39 +73,21 @@ func Update() error {
 	return nil
 }
 
-func CheckForUpdates() (bool, error) {
-	launcherVersionInformation, err := RequestLauncherVersionInformation()
+func IsUpdateAvailable() (bool, error) {
+	actualLauncherVersion, err := RequestActualLauncherVersion()
 	if err != nil {
 		return false, errors.New("cantcheckupdate")
 	}
-	executablePath, err := os.Executable()
+	currentSHA256, err := SHA256OfExecutable()
 	if err != nil {
 		return false, err
 	}
+	currentVersion := GetLauncherVersion()
 
-	executablePathSymlinkEvaluated, err := filepath.EvalSymlinks(executablePath)
-	if err != nil {
-		return false, err
-	}
+	fmt.Println(currentSHA256, currentVersion)
+	fmt.Println(actualLauncherVersion.SHA256, actualLauncherVersion.Version)
 
-	executableFile, err := os.Open(executablePathSymlinkEvaluated)
-	if err != nil {
-		return false, err
-	}
-
-	binaryData, err := io.ReadAll(executableFile)
-	if err != nil {
-		return false, err
-	}
-
-	currentExecutableHash := sha256.New()
-	if _, err = io.Copy(currentExecutableHash, bytes.NewBuffer(binaryData)); err != nil {
-		return false, err
-	}
-
-	checksumOfCurrentExecutable := hex.EncodeToString(currentExecutableHash.Sum(nil))
-
-	if GetLauncherVersion() != launcherVersionInformation.ActualVersion || checksumOfCurrentExecutable != launcherVersionInformation.ActualHashSHA256 {
+	if currentVersion != actualLauncherVersion.Version || currentSHA256 != actualLauncherVersion.SHA256 {
 		return true, nil
 	}
 	return false, nil

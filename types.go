@@ -32,9 +32,11 @@ type MinecraftDataResponse struct {
 	UUID        string `json:"uuid"`
 }
 
-type LauncherVersionInformation struct {
-	ActualVersion    string `json:"version"`
-	ActualHashSHA256 string `json:"hash"`
+type LauncherVersion struct {
+	Version     string `json:"version"`
+	SHA256      string `json:"sha256"`
+	DownloadUrl string `json:"url"`
+	ReleaseDate string `json:"releaseDate"`
 }
 
 type StringMap map[string]string

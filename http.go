@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -139,11 +140,12 @@ func RequestMinecraftUserData(accessToken string) (MinecraftDataResponse, error)
 	return response, nil
 }
 
-func RequestLauncherVersionInformation() (LauncherVersionInformation, error) {
-	response, err := GET[LauncherVersionInformation](BaseUrl+"/launcher/updates", StringMap{})
+func RequestActualLauncherVersion() (LauncherVersion, error) {
+	response, err := GET[LauncherVersion](BaseUrl+"/launcher/update/actual", StringMap{})
 	if err != nil {
-		return LauncherVersionInformation{}, err
+		return LauncherVersion{}, err
 	}
+	response.SHA256 = strings.ToLower(response.SHA256)
 	return response, nil
 }
 
