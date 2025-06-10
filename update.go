@@ -71,9 +71,8 @@ func Update() error {
 func CheckForUpdates() (bool, error) {
 	launcherVersionInformation, err := RequestLauncherVersionInformation()
 	if err != nil {
-		return false, err
+		return false, errors.New("cantcheckupdate")
 	}
-
 	executablePath, err := os.Executable()
 	if err != nil {
 		return false, err

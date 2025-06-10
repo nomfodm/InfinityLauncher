@@ -54,10 +54,10 @@ export default function LauncherUpdatingPage() {
                         <Text fw={"600"} fz={"h2"} ta={"center"}>Ошибка обновления</Text>
                         <AnimatePresence>
                             <motion.div exit={{opacity: 0}} animate={{opacity: 1}} initial={{opacity: 0}}>
-                                <Text c={"dimmed"} fz={"xs"}>
-                                    Скачайте актуальную версию вручную по ссылке:
+                                <Text c={"dimmed"} fz={"sm"}>
+                                    Вы можете скачать актуальную версию вручную по ссылке:
                                 </Text>
-                                <Anchor component={"div"} onClick={() => BrowserOpenURL(getLauncherDownloadUrl())} fz={"sm"}>
+                                <Anchor component={"div"} onClick={() => BrowserOpenURL(getLauncherDownloadUrl())} fz={"md"}>
                                     infinityserver.ru/launcher
                                 </Anchor>
                             </motion.div>
@@ -70,10 +70,10 @@ export default function LauncherUpdatingPage() {
                             {!launcherUpdatingState.updating &&
                                 <>
                                     <motion.div exit={{opacity: 0}} initial={{opacity: 1}}>
-                                        <Text c={"dimmed"} fz={"xs"}>
+                                        <Text c={"dimmed"} fz={"sm"}>
                                             Нажмите куда-нибудь, чтобы начать обновление
                                         </Text>
-                                        <Text c={"dimmed"} fz={"xs"}>
+                                        <Text c={"dimmed"} fz={"sm"}>
                                             Обновится автоматически через: {launcherUpdatingState.countdown}
                                         </Text>
                                     </motion.div>

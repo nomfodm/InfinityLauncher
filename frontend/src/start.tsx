@@ -3,7 +3,6 @@ import {HashRouter} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {CheckForUpdates, Init} from "./wailsjs/go/main/App";
 import SimplifiedHeaderWithoutLink from "./components/SimplifiedHeader/SimplifiedHeaderWithoutLink";
-import CloseMinimiseButtons from "./components/Floating/CloseMinimiseButtons";
 import LauncherUpdatingPage from "./pages/LauncherUpdating/LauncherUpdatingPage";
 import App from "./App";
 import authService from "./services/auth";
@@ -39,6 +38,10 @@ export default function Start() {
 
                 setInitialized(true);
             } catch (e) {
+                if (`${e}` == "cantcheckupdate") {
+                    setNeedsToUpdate(true)
+                    return
+                }
                 setError(`${e}`);
 
             } finally {
@@ -77,7 +80,6 @@ export default function Start() {
                 </>}
                 {needsToUpdate && <>
                     <SimplifiedHeaderWithoutLink/>
-                    <CloseMinimiseButtons/>
                     <LauncherUpdatingPage/>
                 </>}
             </Box>
