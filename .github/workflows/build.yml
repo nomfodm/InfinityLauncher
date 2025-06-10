@@ -18,6 +18,9 @@ jobs:
           - name: 'InfinityLauncher.exe'
             platform: 'windows/amd64'
             os: 'windows-latest'
+          # - name: 'InfinityLauncher'
+          #   platform: 'linux/amd64'
+          #   os: 'ubuntu-latest'
 
     runs-on: ${{ matrix.build.os }}
     steps:
@@ -34,12 +37,54 @@ jobs:
           placeholders: |
               %infinitylauncher%VERSION%=${{ github.ref_name }}
         
-      - name: Build wails
-        uses: dAppServer/wails-build-action@main
-        id: build
+#      - name: Build wails
+#        uses: dAppServer/wails-build-action@main
+#        id: build
+#        with:
+#          wails-version: "v2.9.2"
+#          build-name: ${{ matrix.build.name }}
+#          build-platform: ${{ matrix.build.platform }}
+#          nsis: false
+#          go-version: '1.23'
+#          package: false
+
+      - name: Generate SHA256
+        if: runner.os != 'Windows'
+        run: |
+          cd build/bin1
+          sha256sum ${{ matrix.build.name }} > ${{ matrix.build.name }}.sha256
+
+      - name: Generate SHA256
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Get-FileHash build\bin1\${{ matrix.build.name }} -Algorithm SHA256 |
+            ForEach-Object { "{0}" -f $_.Hash.ToLower() } |
+            Out-File build\bin1\${{ matrix.build.name }}.sha256 -Encoding ascii
+          
+          $hash = (Get-FileHash build\bin1\${{ matrix.build.name }} -Algorithm SHA256).Hash.ToLower()
+          "APP_SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Encoding ascii -Append
+
+      - name: Upload to S3
+        uses: shallwefootball/s3-upload-action@master
         with:
-          wails-version: "v2.9.2"
-          build-name: ${{ matrix.build.name }}
-          build-platform: ${{ matrix.build.platform }}
-          nsis: false
-          go-version: '1.23'
+          aws_key_id: ${{ secrets.AWS_ACCESS }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET}}
+          aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
+          endpoint: ${{ secrets.AWS_URL }}
+          source_dir: 'build/bin1'
+          destination_dir: "launcher/${{ env.APP_SHA256 }}"
+
+      - name: Register version in API
+        shell: bash
+        run: |
+          VERSION=${{ github.ref_name }}
+          UPLOAD_URL=${{ secrets.STORAGE_URL }}/launcher/${{ env.APP_SHA256 }}/${{ matrix.build.name }}
+          curl -X POST ${{ secrets.API_REGISTER_UPDATE_URL }} \
+            -H "Authorization: ${{ secrets.ADMIN_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "version": "'"$VERSION"'",
+              "downloadUrl": "'$UPLOAD_URL'",
+              "sha256": "${{ env.APP_SHA256 }}"
+            }'
