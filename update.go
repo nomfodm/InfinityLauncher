@@ -53,7 +53,7 @@ func Update() error {
 		}
 
 		hash := sha256.New()
-		if _, err := io.Copy(hash, bytes.NewReader(binaryData)); err != nil {
+		if _, err := io.Copy(hash, bytes.NewBuffer(binaryData)); err != nil {
 			return err
 		}
 
