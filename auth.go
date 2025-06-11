@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"github.com/google/uuid"
+	"github.com/zalando/go-keyring"
 	"time"
 )
 
@@ -49,6 +51,9 @@ func (a *Auth) Login(username, password string) (string, error) {
 func (a *Auth) Logout() error {
 	refreshToken, err := Get("refresh")
 	if err != nil {
+		if errors.Is(err, keyring.ErrNotFound) {
+			return nil
+		}
 		return err
 	}
 	_, err = RequestLogout(refreshToken)
