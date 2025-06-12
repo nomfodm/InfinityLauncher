@@ -45,6 +45,10 @@ func main() {
 			gameProfiler,
 			system,
 		},
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId:               "26d0c944-b842-4218-af16-bcf99d51b6ef",
+			OnSecondInstanceLaunch: app.onSecondInstanceLaunch,
+		},
 		Windows: &windows.Options{
 			WebviewUserDataPath: filepath.Join(AppFolderPath, "webview"),
 		},

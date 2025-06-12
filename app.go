@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"math/rand"
 	"os/exec"
@@ -19,7 +20,7 @@ type App struct {
 }
 
 var (
-	ApplicationContext context.Context
+	ApplicationContext *context.Context
 )
 
 func NewApp() *App {
@@ -28,7 +29,7 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	ApplicationContext = ctx
+	ApplicationContext = &ctx
 
 	runtime.WindowCenter(ctx)
 }
@@ -92,6 +93,16 @@ func (a *App) Play(profile GameProfile) error {
 	//	"error":  nil,
 	//})
 	return nil
+}
+
+func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
+	secondInstanceArgs := secondInstanceData.Args
+
+	println("user opened second instance", strings.Join(secondInstanceData.Args, ","))
+	println("user opened second from", secondInstanceData.WorkingDirectory)
+	runtime.WindowUnminimise(*ApplicationContext)
+	runtime.Show(*ApplicationContext)
+	go runtime.EventsEmit(*ApplicationContext, "launchArgs", secondInstanceArgs)
 }
 
 func (a *App) StartGame(profileID int, accessToken string) error {

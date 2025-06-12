@@ -48,7 +48,7 @@ func CheckAndFixClientFiles(clientDirectory string, gameProfile GameProfile) err
 
 	callback := func(total, done int64, status uint, err error) {
 		if err != nil {
-			runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
+			runtime.EventsEmit(*ApplicationContext, "setProgress", map[string]any{
 				"total":  total,
 				"done":   done,
 				"status": status,
@@ -56,7 +56,7 @@ func CheckAndFixClientFiles(clientDirectory string, gameProfile GameProfile) err
 			})
 			return
 		}
-		runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
+		runtime.EventsEmit(*ApplicationContext, "setProgress", map[string]any{
 			"total":  total,
 			"done":   done,
 			"status": status,
@@ -65,7 +65,7 @@ func CheckAndFixClientFiles(clientDirectory string, gameProfile GameProfile) err
 	}
 	throttledCallback := makeThrottledProgress(callback, 300*time.Millisecond)
 
-	cancelEventCancel := runtime.EventsOnce(ApplicationContext, "cancel", func(optionalData ...interface{}) {
+	cancelEventCancel := runtime.EventsOnce(*ApplicationContext, "cancel", func(optionalData ...interface{}) {
 		cancel()
 	})
 	defer cancelEventCancel()
