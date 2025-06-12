@@ -6,7 +6,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import styles from "./Floating.module.css";
-import {Menu, rem} from "@mantine/core";
+import {Menu, rem, Tooltip} from "@mantine/core";
 
 import authService from "../../services/auth"
 
@@ -78,14 +78,17 @@ export default function Floating() {
 
         <Menu.Dropdown>
           <Menu.Label>Лаунчер {version}</Menu.Label>
-          <Menu.Item
-            onClick={settingsHandlers.open}
-            leftSection={
-              <IconSettings style={{ width: rem(20), height: rem(20) }} />
-            }
-          >
-            Настройки
-          </Menu.Item>
+          <Tooltip.Floating color={"dark"} label={"В разработке..."}>
+            <Menu.Item
+              onClick={settingsHandlers.open}
+              leftSection={
+                <IconSettings style={{ width: rem(20), height: rem(20) }} />
+              }
+              disabled
+            >
+              Настройки
+            </Menu.Item>
+          </Tooltip.Floating>
 
           <Menu.Divider />
           {auth.authed ? (
@@ -107,7 +110,6 @@ export default function Floating() {
               <Menu.Item
                 color="#ED4245"
                 onClick={handleLogout}
-                // disabled={[DownloadStatus.DOWNLOADING, DownloadStatus.UNPACKING].includes(downloading.status)}
                 leftSection={
                   <IconLogout2 style={{ width: rem(20), height: rem(20) }} />
                 }
