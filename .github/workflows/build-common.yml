@@ -1,9 +1,9 @@
-name: Wails build
+name: Wails build common
 
 on:
   push:
     tags:
-      - '*'
+      - 'v*.*.*'
   workflow_dispatch:
 
 env:
@@ -86,5 +86,6 @@ jobs:
             -d '{
               "version": "'"$VERSION"'",
               "downloadUrl": "'$UPLOAD_URL'",
-              "sha256": "${{ env.APP_SHA256 }}"
+              "sha256": "${{ env.APP_SHA256 }}",
+              "mandatory": false
             }'
