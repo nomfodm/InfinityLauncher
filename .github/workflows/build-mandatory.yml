@@ -1,4 +1,4 @@
-name: Wails build common
+name: Wails build MANDATORY
 
 on:
   push:
