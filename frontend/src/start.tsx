@@ -1,7 +1,7 @@
 import {Box, Loader, LoadingOverlay, Text} from "@mantine/core";
 import {HashRouter} from "react-router-dom";
 import React, {useEffect, useState} from "react";
-import {CheckForUpdates, Init} from "./wailsjs/go/main/App";
+import {Init, IsMandatoryUpdateAvailable} from "./wailsjs/go/main/App";
 import SimplifiedHeaderWithoutLink from "./components/SimplifiedHeader/SimplifiedHeaderWithoutLink";
 import LauncherUpdatingPage from "./pages/LauncherUpdating/LauncherUpdatingPage";
 import App from "./App";
@@ -27,8 +27,8 @@ export default function Start() {
             try {
                 await Init();
 
-                const updateAvailable = await CheckForUpdates()
-                if (updateAvailable) {
+                const isMandatoryUpdateAvailable = await IsMandatoryUpdateAvailable()
+                if (isMandatoryUpdateAvailable) {
                     setNeedsToUpdate(true)
                     return
                 }
@@ -66,7 +66,6 @@ export default function Start() {
                                 loaderProps={{
                                     children:
                                     <>
-                                        <SimplifiedHeaderWithoutLink/>
                                         {isLoading
                                             ? <Loader color="blue"/>
                                             : <Text fz={"xl"} ta={"center"}>{capitalizeWord(error)}</Text>}

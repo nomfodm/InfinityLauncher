@@ -1,12 +1,12 @@
 import {
-  IconExternalLink,
+  IconExternalLink, IconInfoCircle,
   IconLogin2,
   IconLogout2,
   IconSettings,
   IconUser,
 } from "@tabler/icons-react";
 import styles from "./Floating.module.css";
-import {Menu, rem, Tooltip} from "@mantine/core";
+import {Menu, rem} from "@mantine/core";
 
 import authService from "../../services/auth"
 
@@ -21,6 +21,7 @@ import store from "../../store";
 import {notifications} from "@mantine/notifications";
 import {GetVersion} from "../../wailsjs/go/main/App";
 import {GameStatus} from "../../store/game";
+import LauncherInfoModal from "../LauncherInfoModal/LauncherInfoModal";
 
 
 export default function Floating() {
@@ -28,6 +29,7 @@ export default function Floating() {
 
   const [settingsOpened, settingsHandlers] = useDisclosure();
   const [loginOpened, loginHandlers] = useDisclosure();
+  const [launcherInfoOpened, launcherInfoHandlers] = useDisclosure();
 
   const [version, setVersion] = useState("0.0.0")
 
@@ -78,17 +80,23 @@ export default function Floating() {
 
         <Menu.Dropdown>
           <Menu.Label>Лаунчер {version}</Menu.Label>
-          <Tooltip.Floating color={"dark"} label={"В разработке..."}>
-            <Menu.Item
-              onClick={settingsHandlers.open}
+          <Menu.Item
+            onClick={settingsHandlers.open}
+            leftSection={
+              <IconSettings style={{ width: rem(20), height: rem(20) }} />
+            }
+            disabled
+          >
+            Настройки
+          </Menu.Item>
+          <Menu.Item
+              onClick={launcherInfoHandlers.open}
               leftSection={
-                <IconSettings style={{ width: rem(20), height: rem(20) }} />
+                <IconInfoCircle style={{ width: rem(20), height: rem(20) }} />
               }
-              disabled
-            >
-              Настройки
-            </Menu.Item>
-          </Tooltip.Floating>
+          >
+            О лаунчере
+          </Menu.Item>
 
           <Menu.Divider />
           {auth.authed ? (
@@ -136,6 +144,7 @@ export default function Floating() {
 
       <SettingsModal close={settingsHandlers.close} opened={settingsOpened} />
       <LoginModal close={loginHandlers.close} opened={loginOpened} />
+      <LauncherInfoModal opened={launcherInfoOpened} handlers={launcherInfoHandlers}  />
     </section>
   );
 }

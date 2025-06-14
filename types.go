@@ -37,6 +37,7 @@ type LauncherVersion struct {
 	SHA256      string `json:"sha256"`
 	DownloadUrl string `json:"url"`
 	ReleaseDate string `json:"releaseDate"`
+	Mandatory   bool   `json:"mandatory"`
 }
 
 type StringMap map[string]string
