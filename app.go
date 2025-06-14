@@ -84,14 +84,6 @@ func (a *App) Play(profile GameProfile) error {
 		return err
 	}
 
-	//fmt.Println(clientDirectory, manifestUrl)
-	//
-	//runtime.EventsEmit(ApplicationContext, "setProgress", map[string]any{
-	//	"total":  123,
-	//	"done":   1234,
-	//	"status": 0,
-	//	"error":  nil,
-	//})
 	return nil
 }
 
@@ -208,8 +200,16 @@ func (a *App) StartGameWithoutAccount(profileID int) error {
 	return cmd.Run()
 }
 
-func (a *App) CheckForUpdates() (bool, error) {
-	return IsUpdateAvailable()
+func (a *App) IsMandatoryUpdateAvailable() (bool, error) {
+	return IsMandatoryUpdateAvailable()
+}
+
+func (a *App) IsAnyUpdateAvailable() (bool, error) {
+	return IsAnyUpdateAvailable()
+}
+
+func (a *App) GetActualLauncherVersion() (LauncherVersion, error) {
+	return GetActualLauncherVersion()
 }
 
 func (a *App) Update() error {

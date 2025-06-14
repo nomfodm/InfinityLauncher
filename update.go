@@ -5,7 +5,6 @@ import (
 	"crypto"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"github.com/minio/selfupdate"
 	"io"
 	"net/http"
@@ -37,14 +36,14 @@ func RetrieveUpdateBinaryData(url string) ([]byte, error) {
 }
 
 func Update() error {
-	isUpdatesFound, err := IsUpdateAvailable()
+	isUpdatesFound, err := IsAnyUpdateAvailable()
 	if err != nil {
 		return err
 	}
 	if isUpdatesFound {
-		actualLauncherVersion, err := RequestActualLauncherVersion()
+		actualLauncherVersion, err := GetActualLauncherVersion()
 		if err != nil {
-			return errors.New("cantcheckupdate")
+			return err
 		}
 
 		binaryData, err := RetrieveUpdateBinaryData(actualLauncherVersion.DownloadUrl)
@@ -73,21 +72,44 @@ func Update() error {
 	return nil
 }
 
-func IsUpdateAvailable() (bool, error) {
+func GetActualLauncherVersion() (LauncherVersion, error) {
 	actualLauncherVersion, err := RequestActualLauncherVersion()
+	if err != nil {
+		return actualLauncherVersion, errors.New("cantcheckupdate")
+	}
+	return actualLauncherVersion, nil
+}
+
+func IsAnyUpdateAvailable() (bool, error) {
+	actualLauncherVersion, err := GetActualLauncherVersion()
 	if err != nil {
 		return false, errors.New("cantcheckupdate")
 	}
+
+	return IsCurrentVersion(actualLauncherVersion)
+}
+
+func IsMandatoryUpdateAvailable() (bool, error) {
+	actualLauncherVersion, err := GetActualLauncherVersion()
+	if err != nil {
+		return false, errors.New("cantcheckupdate")
+	}
+
+	if !actualLauncherVersion.Mandatory {
+		return false, nil
+	}
+
+	return IsCurrentVersion(actualLauncherVersion)
+}
+
+func IsCurrentVersion(version LauncherVersion) (bool, error) {
 	currentSHA256, err := SHA256OfExecutable()
 	if err != nil {
 		return false, err
 	}
 	currentVersion := GetLauncherVersion()
 
-	fmt.Println(currentSHA256, currentVersion)
-	fmt.Println(actualLauncherVersion.SHA256, actualLauncherVersion.Version)
-
-	if currentVersion != actualLauncherVersion.Version || currentSHA256 != actualLauncherVersion.SHA256 {
+	if currentVersion != version.Version || currentSHA256 != version.SHA256 {
 		return true, nil
 	}
 	return false, nil

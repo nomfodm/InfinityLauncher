@@ -1,46 +1,48 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 
+export enum LauncherUpdateStatus {
+    IDLE,
+    UPDATING,
+    RESTARTING,
+    ERROR,
+}
+
+
+
 interface LauncherUpdateState {
-    message: string;
-    updating: boolean;
+    status: LauncherUpdateStatus;
     countdown: number;
-    error: boolean;
-    restarting: boolean;
+    error?: string;
 }
 
 const initialState: LauncherUpdateState = {
-    message: "Найдено обновление",
-    updating: false,
-    countdown: 10,
-    error: false,
-    restarting: false
+    status: LauncherUpdateStatus.IDLE,
+    countdown: 20,
+    error: undefined
 }
 
 export const launcherUpdateSlice = createSlice({
     name: "launcherUpdate",
     initialState,
     reducers: {
-        setLauncherUpdateMessage: (state, action: PayloadAction<string>) => {
-            state.message = action.payload;
-        },
-        setLauncherUpdating: (state, action: PayloadAction<boolean>) => {
-            state.message = "Обновление...";
-            state.updating = action.payload;
+        updating: (state) => {
+            state.status = LauncherUpdateStatus.UPDATING;
         },
         launcherUpdateDecreaseCountdown: (state) => {
             state.countdown--;
         },
-        setLauncherUpdateError: (state, action: PayloadAction<boolean>) => {
-            state.message = "Ошибка обновления";
-            state.error = action.payload;
+        error: (state) => {
+            state.status = LauncherUpdateStatus.ERROR;
         },
-        setLauncherRestarting: (state, action: PayloadAction<boolean>) => {
-            state.message = "Перезапуск...";
-            state.restarting = action.payload;
-        }
+        restarting: (state) => {
+            state.status = LauncherUpdateStatus.RESTARTING
+        },
+        setErrorMessage: (state, action: PayloadAction<string>) => {
+            state.error = action.payload
+        },
     }
 })
 
-export const {setLauncherUpdateMessage, setLauncherUpdateError, setLauncherUpdating, setLauncherRestarting, launcherUpdateDecreaseCountdown} = launcherUpdateSlice.actions
+export const launcherUpdateActions = launcherUpdateSlice.actions
 
 export default launcherUpdateSlice.reducer

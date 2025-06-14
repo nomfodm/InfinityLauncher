@@ -31,7 +31,7 @@ const router = createHashRouter([
         path: "/play/:id",
         element: (
             <>
-                <SimplifiedHeader />
+                <Header />
                 <DetailPage />
             </>
         ),
