@@ -7,7 +7,6 @@ import MainPage from "./pages/Main/MainPage";
 import PlayPage from "./pages/Play/PlayPage";
 import React from "react";
 import DetailPage from "./pages/Detail/DetailPage";
-import SimplifiedHeader from "./components/SimplifiedHeader/SimplifiedHeader";
 
 const router = createHashRouter([
     {

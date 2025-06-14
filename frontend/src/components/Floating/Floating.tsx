@@ -1,5 +1,4 @@
 import {
-  IconCheck,
   IconExternalLink, IconInfoCircle,
   IconLogin2,
   IconLogout2,
@@ -7,7 +6,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import styles from "./Floating.module.css";
-import {Menu, rem, Tooltip} from "@mantine/core";
+import {Menu, rem} from "@mantine/core";
 
 import authService from "../../services/auth"
 
