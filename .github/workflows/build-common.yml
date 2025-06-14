@@ -4,7 +4,8 @@ on:
   push:
     tags:
       - 'v*.*.*'
-      - '!v*.*.*-m'
+    tags-ignore:
+      - 'v*.*.*-m'
   workflow_dispatch:
 
 env:
