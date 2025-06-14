@@ -144,7 +144,7 @@ export default function Floating() {
 
       <SettingsModal close={settingsHandlers.close} opened={settingsOpened} />
       <LoginModal close={loginHandlers.close} opened={loginOpened} />
-      <LauncherInfoModal opened={launcherInfoOpened} close={launcherInfoHandlers.close} />
+      <LauncherInfoModal opened={launcherInfoOpened} handlers={launcherInfoHandlers}  />
     </section>
   );
 }
