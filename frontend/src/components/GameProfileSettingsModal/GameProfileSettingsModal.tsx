@@ -1,4 +1,4 @@
-import {Box, Modal, NumberInput, Paper, Slider, Text} from "@mantine/core";
+import {Anchor, Box, Modal, NumberInput, Paper, Slider, Text} from "@mantine/core";
 import {IconX} from "@tabler/icons-react";
 import {useEffect, useState} from "react";
 import {MkDirAll, ReadGameProfileConfig, WriteGameProfileConfig} from "../../wailsjs/go/main/FS";
@@ -7,7 +7,7 @@ import styles from "./GameProfileSettingsModal.module.css"
 import {GetTotalRAMInMB} from "../../wailsjs/go/main/System";
 import cx from "clsx"
 import {floorRamValue} from "../../utils/ram";
-import {OpenDirectoryDialog} from "../../wailsjs/go/main/App";
+import {OpenDirectoryDialog, OpenDirectoryInExplorer} from "../../wailsjs/go/main/App";
 import GameProfile = main.GameProfile;
 
 export default function GameProfileSettingsModal({
@@ -49,6 +49,13 @@ export default function GameProfileSettingsModal({
         await WriteGameProfileConfig(profile.id, config)
         await MkDirAll(newPath)
         setGamePath(newPath)
+    }
+
+    async function handleOpenPath() {
+        const config = await ReadGameProfileConfig(profile.id)
+        const path = config.path
+
+        await OpenDirectoryInExplorer(path)
     }
 
     async function handleRAMChange(valueRaw: number | string) {
@@ -114,7 +121,10 @@ export default function GameProfileSettingsModal({
                 </Box>
 
                 <Text mt={"md"}>Расположение файлов клиента:</Text>
-                <Text ml={"xs"} td={"underline"} style={{cursor: "pointer"}} onClick={handleChoosePath} lineClamp={10}>{gamePath}</Text>
+                <Box ml={"xs"}>
+                    <Text td={"underline"} style={{cursor: "pointer"}} onClick={handleOpenPath} lineClamp={10}>{gamePath}</Text>
+                    <Anchor onClick={handleChoosePath}>Изменить</Anchor>
+                </Box>
 
             </Paper>
         </Modal>

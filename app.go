@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	wails_runtime "github.com/wailsapp/wails/v2/pkg/runtime"
 	"math/rand"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 )
@@ -31,11 +32,11 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	ApplicationContext = &ctx
 
-	runtime.WindowCenter(ctx)
+	wails_runtime.WindowCenter(ctx)
 }
 
 func (a *App) domready(ctx context.Context) {
-	runtime.WindowShow(ctx)
+	wails_runtime.WindowShow(ctx)
 }
 
 func (a *App) Init() error {
@@ -59,7 +60,15 @@ func (a *App) Init() error {
 }
 
 func (a *App) OpenDirectoryDialog(defaultDirectory string) (string, error) {
-	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{DefaultDirectory: defaultDirectory, Title: "Выберите папку"})
+	return wails_runtime.OpenDirectoryDialog(a.ctx, wails_runtime.OpenDialogOptions{DefaultDirectory: defaultDirectory, Title: "Выберите папку"})
+}
+
+func (a *App) OpenDirectoryInExplorer(path string) error {
+	cmd := "open"
+	if runtime.GOOS == "windows" {
+		cmd = "explorer"
+	}
+	return exec.Command(cmd, path).Start()
 }
 
 func (a *App) GetOptionalFiles(profile GameProfile) ([]OptionalFileEntry, error) {
@@ -92,9 +101,9 @@ func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 
 	println("user opened second instance", strings.Join(secondInstanceData.Args, ","))
 	println("user opened second from", secondInstanceData.WorkingDirectory)
-	runtime.WindowUnminimise(*ApplicationContext)
-	runtime.Show(*ApplicationContext)
-	go runtime.EventsEmit(*ApplicationContext, "launchArgs", secondInstanceArgs)
+	wails_runtime.WindowUnminimise(*ApplicationContext)
+	wails_runtime.Show(*ApplicationContext)
+	go wails_runtime.EventsEmit(*ApplicationContext, "launchArgs", secondInstanceArgs)
 }
 
 func (a *App) StartGame(profileID int, accessToken string) error {
@@ -133,7 +142,7 @@ func (a *App) StartGame(profileID int, accessToken string) error {
 	cancelCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	closeGameEventCancel := runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
+	closeGameEventCancel := wails_runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
 		cancel()
 	})
 	defer closeGameEventCancel()
@@ -142,7 +151,7 @@ func (a *App) StartGame(profileID int, accessToken string) error {
 	cmd.Dir = gameClientConfig.Path
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
-	runtime.EventsEmit(a.ctx, "gameStarted")
+	wails_runtime.EventsEmit(a.ctx, "gameStarted")
 
 	return cmd.Run()
 }
@@ -184,7 +193,7 @@ func (a *App) StartGameWithoutAccount(profileID int) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	closeGameEventCancel := runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
+	closeGameEventCancel := wails_runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
 		cancel()
 	})
 	defer closeGameEventCancel()
@@ -195,7 +204,7 @@ func (a *App) StartGameWithoutAccount(profileID int) error {
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
-	runtime.EventsEmit(a.ctx, "gameStarted")
+	wails_runtime.EventsEmit(a.ctx, "gameStarted")
 
 	return cmd.Run()
 }
