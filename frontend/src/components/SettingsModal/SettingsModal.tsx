@@ -1,5 +1,5 @@
-import {Group, Modal, Switch, Text} from "@mantine/core";
-import { IconX } from "@tabler/icons-react";
+import {Flex, Group, Modal, rem, Switch, Text} from "@mantine/core";
+import {IconMoodWink, IconX} from "@tabler/icons-react";
 import React, { useEffect, useState } from "react";
 import {ReadLauncherConfig, WriteLauncherConfig} from "../../wailsjs/go/main/FS";
 
@@ -11,23 +11,23 @@ export default function SettingsModal({
   opened: boolean;
   close: () => void;
 }) {
-  const [closeOnGameStart, setCloseOnGameStart] = useState<boolean>(true);
+  const [closeWithFunnyAnimation, setCloseWithFunnyAnimation] = useState<boolean>(true);
 
   useEffect(() => {
     async function asyncWrapper() {
       const config = await ReadLauncherConfig();
 
-      setCloseOnGameStart(config.closeOnGameStart);
+      setCloseWithFunnyAnimation(config.closeWithFunnyAnimation);
     }
 
     asyncWrapper();
   }, []);
 
   async function handleCloseOnGameStartSwitch(e: React.ChangeEvent<HTMLInputElement>) {
-    setCloseOnGameStart(e.target.checked);
+    setCloseWithFunnyAnimation(e.target.checked);
 
     const config = await ReadLauncherConfig();
-    config.closeOnGameStart = e.target.checked;
+    config.closeWithFunnyAnimation = e.target.checked;
 
     await WriteLauncherConfig(config);
   }
@@ -46,14 +46,18 @@ export default function SettingsModal({
         icon: <IconX />,
       }}
       closeOnClickOutside={false}
-      title={"Настройки лаунчера"}
+      title={<Text fz={"h3"} fw={"bold"}>Настройки лаунчера</Text>}
     >
       <Group>
         <Switch
-          defaultChecked={closeOnGameStart}
+          defaultChecked={closeWithFunnyAnimation}
           onChange={handleCloseOnGameStartSwitch}
         />
-        <Text>Закрывать лаунчер при запуске игры</Text>
+        <Flex align={"center"} gap={rem(5)}>
+          <Text>Закрывать лаунчер на приятной нотке</Text>
+          <IconMoodWink/>
+        </Flex>
+
       </Group>
     </Modal>
   );

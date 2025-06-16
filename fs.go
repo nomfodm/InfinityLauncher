@@ -10,7 +10,7 @@ import (
 type FS struct{}
 
 type LauncherConfig struct {
-	CloseOnGameStart bool `json:"closeOnGameStart"`
+	CloseWithFunnyAnimation bool `json:"closeWithFunnyAnimation"`
 }
 
 type GameProfileConfig struct {
@@ -55,7 +55,7 @@ func (fs *FS) initConfig() error {
 
 func GenerateDefaultLauncherConfig() *LauncherConfig {
 	return &LauncherConfig{
-		CloseOnGameStart: false,
+		CloseWithFunnyAnimation: false,
 	}
 }
 

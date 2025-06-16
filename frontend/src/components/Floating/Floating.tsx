@@ -85,7 +85,6 @@ export default function Floating() {
             leftSection={
               <IconSettings style={{ width: rem(20), height: rem(20) }} />
             }
-            disabled
           >
             Настройки
           </Menu.Item>
