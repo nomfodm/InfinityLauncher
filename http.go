@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -145,7 +144,14 @@ func RequestActualLauncherVersion() (LauncherVersion, error) {
 	if err != nil {
 		return LauncherVersion{}, err
 	}
-	response.SHA256 = strings.ToLower(response.SHA256)
+	return response, nil
+}
+
+func RequestLastMandatoryLauncherVersion() (LauncherVersion, error) {
+	response, err := GET[LauncherVersion](BaseUrl+"/launcher/update/lastmandatory", StringMap{})
+	if err != nil {
+		return LauncherVersion{}, err
+	}
 	return response, nil
 }
 
