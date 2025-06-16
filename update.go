@@ -5,14 +5,13 @@ import (
 	"crypto"
 	"crypto/sha256"
 	"errors"
+	semver "github.com/hashicorp/go-version"
 	"github.com/minio/selfupdate"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
-	"strings"
 )
 
 var (
@@ -100,6 +99,19 @@ func IsAnyUpdateAvailable() (bool, error) {
 	return !IsVersion(actualLauncherVersion, currentVersion), nil
 }
 
+func IsVersionBeforeVersion(version1, version2 LauncherVersion) (bool, error) {
+	v1, err := semver.NewSemver(version1.Version)
+	if err != nil {
+		return false, err
+	}
+	v2, err := semver.NewSemver(version2.Version)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.LessThan(v2), nil
+}
+
 func IsMandatoryUpdateAvailable() (bool, error) {
 	actualLauncherVersion, err := GetActualLauncherVersion()
 	if err != nil {
@@ -150,63 +162,6 @@ func GetCurrentVersion() (LauncherVersion, error) {
 	currentVersion := GetLauncherVersion()
 
 	return LauncherVersion{Version: currentVersion, SHA256: currentSHA256}, nil
-}
-
-func IsVersionBeforeVersion(version1, version2 LauncherVersion) (bool, error) {
-	major1, minor1, patch1, err := ExtractVersionString(version1.Version)
-	if err != nil {
-		return false, err
-	}
-	major2, minor2, patch2, err := ExtractVersionString(version2.Version)
-	if err != nil {
-		return false, err
-	}
-
-	if major1 == major2 && minor1 == minor2 && patch1 == patch2 {
-		return false, nil
-	}
-
-	if major1 < major2 {
-		return true, nil
-	}
-
-	if minor1 < minor2 {
-		return true, nil
-	}
-
-	if patch1 < patch2 {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func ExtractVersionString(version string) (int, int, int, error) {
-	versionSplit := strings.Split(version, ".") // v1.2.0-m
-	if len(versionSplit) != 3 {
-		return -1, -1, -1, errors.New("version string does not contain three parts")
-	}
-
-	majorStr := versionSplit[0][1:]
-	minorStr := versionSplit[1]
-	patchStr := strings.Split(versionSplit[2], "-")[0]
-
-	major, err := strconv.Atoi(majorStr)
-	if err != nil {
-		return -1, -1, -1, err
-	}
-
-	minor, err := strconv.Atoi(minorStr)
-	if err != nil {
-		return -1, -1, -1, err
-	}
-
-	patch, err := strconv.Atoi(patchStr)
-	if err != nil {
-		return -1, -1, -1, err
-	}
-
-	return major, minor, patch, nil
 }
 
 func IsVersion(version1, version2 LauncherVersion) bool {
