@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"github.com/zalando/go-keyring"
 	"time"
 )
@@ -30,8 +29,7 @@ type Textures struct {
 }
 
 type MinecraftCredential struct {
-	Username string    `json:"username"`
-	UUID     uuid.UUID `json:"uuid"`
+	Username string `json:"username"`
 }
 
 func (a *Auth) HadSession() bool {
