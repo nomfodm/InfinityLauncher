@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func computeMD5(path string) (string, error) {
@@ -31,7 +32,12 @@ func verify(path, expected string) (bool, error) {
 }
 
 func SHA256OfExecutable() (string, error) {
-	executablePath, err := os.Executable()
+	executablePathRaw, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+
+	executablePath, err := filepath.EvalSymlinks(executablePathRaw)
 	if err != nil {
 		return "", err
 	}

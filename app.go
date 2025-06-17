@@ -9,6 +9,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	wails_runtime "github.com/wailsapp/wails/v2/pkg/runtime"
 	"math/rand"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -45,6 +46,11 @@ func (a *App) Init() error {
 		return err
 	}
 
+	err = cleanup()
+	if err != nil {
+		return err
+	}
+
 	fs := NewFS()
 	err = fs.InitFS()
 	if err != nil {
@@ -57,6 +63,31 @@ func (a *App) Init() error {
 	}
 
 	return nil
+}
+
+func cleanup() error {
+	executable, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	executablePath, err := filepath.EvalSymlinks(executable)
+	if err != nil {
+		return err
+	}
+
+	executableDir := filepath.Dir(executablePath)
+	executableName := filepath.Base(executablePath)
+	newExecutablePath := filepath.Join(executableDir, "."+executableName+".new")
+
+	_, err = os.Stat(newExecutablePath)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	return os.Remove(newExecutablePath)
 }
 
 func (a *App) OpenDirectoryDialog(defaultDirectory string) (string, error) {
