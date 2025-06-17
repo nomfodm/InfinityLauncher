@@ -6,6 +6,7 @@ toolchain go1.23.0
 
 require (
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/go-version v1.7.0
 	github.com/iverly/go-mcping v1.0.1
 	github.com/minio/selfupdate v0.6.0
 	github.com/shirou/gopsutil v3.21.11+incompatible

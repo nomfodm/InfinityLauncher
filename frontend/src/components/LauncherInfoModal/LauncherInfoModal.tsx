@@ -122,6 +122,7 @@ export default function LauncherInfoModal({
         return () => clearTimeout(timeout)
     }, [countdown, status]);
 
+    const canClose = ![UpdateFlowStatus.UPDATING, UpdateFlowStatus.RESTARTING, UpdateFlowStatus.MANDATORYFOUND].includes(status)
     return (
         <Modal
             opened={opened}
@@ -132,10 +133,12 @@ export default function LauncherInfoModal({
                 backgroundOpacity: 0.5,
                 blur: 3,
             }}
+            withCloseButton={canClose}
+            closeOnClickOutside={canClose}
+            closeOnEscape={canClose}
             closeButtonProps={{
                 size: 20,
-                icon: ![UpdateFlowStatus.UPDATING, UpdateFlowStatus.RESTARTING, UpdateFlowStatus.MANDATORYFOUND].includes(status) ?
-                    <IconX/> : " ",
+                icon: <IconX/>,
             }}
             title={<Text fz={"h3"} fw={"bold"}>О приложении</Text>}
         >

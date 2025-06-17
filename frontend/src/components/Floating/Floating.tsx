@@ -74,7 +74,7 @@ export default function Floating() {
       <Menu width={220} position="bottom-end">
         <Menu.Target>
           <button className={styles.user}>
-            <img draggable={false} src={getUserSkinAvatarUrl(auth.authed ? auth.user!.textures.skinHash : undefined)} alt="" width={32} height={32} />
+            <img draggable={false} src={getUserSkinAvatarUrl(auth.authed ? auth.user!.textures.skinHash : undefined)} alt="" width={35} height={35} />
           </button>
         </Menu.Target>
 
