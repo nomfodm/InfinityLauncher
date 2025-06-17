@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto"
-	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	semver "github.com/hashicorp/go-version"
 	"github.com/minio/selfupdate"
@@ -53,14 +53,14 @@ func Update() error {
 			return err
 		}
 
-		hash := sha256.New()
-		if _, err := io.Copy(hash, bytes.NewBuffer(binaryData)); err != nil {
+		hash, err := hex.DecodeString(actualLauncherVersion.SHA256)
+		if err != nil {
 			return err
 		}
 
 		err = selfupdate.Apply(bytes.NewReader(binaryData), selfupdate.Options{
 			Hash:        crypto.SHA256,
-			Checksum:    hash.Sum(nil),
+			Checksum:    hash,
 			OldSavePath: filepath.Join(AppFolderPath, ".infinity.old"),
 		})
 
