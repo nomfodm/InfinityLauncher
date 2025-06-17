@@ -108,12 +108,11 @@ export default function LauncherInfoModal({
             setError(`${e}`)
             setStatus(UpdateFlowStatus.ERROR)
         }
-
     }
 
     useEffect(() => {
         let timeout: number;
-        if (status === UpdateFlowStatus.MANDATORYFOUND) {
+        if (status === UpdateFlowStatus.MANDATORYFOUND && opened) {
             if (countdown > 0) {
                 timeout = setTimeout(() => setCountdown(countdown => countdown - 1), 1000);
             } else {
