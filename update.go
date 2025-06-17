@@ -16,6 +16,7 @@ import (
 
 var (
 	ErrUpdateExeDoesNotExists = errors.New("update exe does not exists")
+	ErrCantCheckUpdate        = errors.New("cant check update")
 )
 
 func RetrieveUpdateBinaryData(url string) ([]byte, error) {
@@ -76,7 +77,7 @@ func Update() error {
 func GetActualLauncherVersion() (LauncherVersion, error) {
 	actualLauncherVersion, err := RequestActualLauncherVersion()
 	if err != nil {
-		return actualLauncherVersion, errors.New("cantcheckupdate")
+		return actualLauncherVersion, ErrCantCheckUpdate
 	}
 	return actualLauncherVersion, nil
 }
@@ -84,7 +85,7 @@ func GetActualLauncherVersion() (LauncherVersion, error) {
 func GetLastMandatoryLauncherVersion() (LauncherVersion, error) {
 	lastMandatoryLauncherVersion, err := RequestLastMandatoryLauncherVersion()
 	if err != nil {
-		return lastMandatoryLauncherVersion, errors.New("cantcheckupdate")
+		return lastMandatoryLauncherVersion, ErrCantCheckUpdate
 	}
 	return lastMandatoryLauncherVersion, nil
 }
@@ -92,7 +93,7 @@ func GetLastMandatoryLauncherVersion() (LauncherVersion, error) {
 func IsAnyUpdateAvailable() (bool, error) {
 	actualLauncherVersion, err := GetActualLauncherVersion()
 	if err != nil {
-		return false, errors.New("cantcheckupdate")
+		return false, ErrCantCheckUpdate
 	}
 	currentVersion, err := GetCurrentVersion()
 

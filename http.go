@@ -15,8 +15,8 @@ var (
 )
 
 var (
-	ErrConnectionFailed = errors.New("не удалось подключиться к серверам Infinity")
-	ErrMaintenance      = errors.New("проводятся тех.работы")
+	ErrConnectionFailed = errors.New("cant connect")
+	ErrMaintenance      = errors.New("maintenance")
 )
 
 func GET[T any](url string, headers StringMap) (T, error) {
