@@ -80,9 +80,9 @@ class DownloadService {
                 await authService.checkAuth()
                 const token = localStorage.getItem("token")!
 
-                await StartGame(gameProfileID, token)
+                await StartGame(profile, token)
             } else {
-                await StartGameWithoutAccount(gameProfileID)
+                await StartGameWithoutAccount(profile)
             }
             store.dispatch(gameActions.idle())
         } catch (e) {

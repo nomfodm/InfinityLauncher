@@ -5,9 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	wails_runtime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.org/x/sync/errgroup"
+	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -137,19 +140,59 @@ func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 	go wails_runtime.EventsEmit(*ApplicationContext, "launchArgs", secondInstanceArgs)
 }
 
-func (a *App) StartGame(profileID int, accessToken string) error {
+func (a *App) StartGame(profile GameProfile, accessToken string) error {
+	profileID := int(profile.Id)
+
+	cancelCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	fs := NewFS()
+	gameClientConfig, err := fs.ReadGameProfileConfig(profileID)
+	if err != nil {
+		return err
+	}
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	errs, _ := errgroup.WithContext(cancelCtx)
+
+	errs.Go(func() error {
+		for {
+			select {
+			case <-cancelCtx.Done():
+				return nil
+			case event, _ := <-watcher.Events:
+				cancel()
+				return fmt.Errorf("modified file: %s", event.Name)
+			case err, _ := <-watcher.Errors:
+				cancel()
+				return fmt.Errorf("error: %w", err)
+			}
+		}
+	})
+
+	manifest, err := loadManifest(profile.Manifest.URL)
+	if err != nil {
+		return err
+	}
+	for _, folder := range manifest.HardCheckingFolders {
+		folderPath := filepath.Join(gameClientConfig.Path, folder)
+		err = watcher.Add(folderPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	commandRaw, err := RetrieveRunCommand(profileID)
 	if err != nil {
 		return err
 	}
 
 	minecraftData, err := RequestMinecraftUserData(accessToken)
-	if err != nil {
-		return err
-	}
-
-	fs := NewFS()
-	gameClientConfig, err := fs.ReadGameProfileConfig(profileID)
 	if err != nil {
 		return err
 	}
@@ -170,9 +213,6 @@ func (a *App) StartGame(profileID int, accessToken string) error {
 		command = append(command, stringToAdd)
 	}
 
-	cancelCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	closeGameEventCancel := wails_runtime.EventsOnce(a.ctx, "closeGame", func(optionalData ...interface{}) {
 		cancel()
 	})
@@ -184,10 +224,13 @@ func (a *App) StartGame(profileID int, accessToken string) error {
 
 	wails_runtime.EventsEmit(a.ctx, "gameStarted")
 
-	return cmd.Run()
+	errs.Go(cmd.Run)
+
+	return errs.Wait()
 }
 
-func (a *App) StartGameWithoutAccount(profileID int) error {
+func (a *App) StartGameWithoutAccount(profile GameProfile) error {
+	profileID := int(profile.Id)
 	commandRaw, err := RetrieveRunCommand(profileID)
 	if err != nil {
 		return err

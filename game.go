@@ -105,10 +105,6 @@ func CheckAndFixClientFiles(clientDirectory string, gameProfile GameProfile) err
 		}
 	}
 
-	if err := cleanupExtraFiles(manifest.Required, manifest.HardCheckingFolders, clientDirectory); err != nil {
-		return fmt.Errorf("Ошибка очистки лишних файлов: ", err)
-	}
-
 	var requiredFilesToProcess []FileEntry
 	totalBytes = 0
 	doneBytes = 0
@@ -235,13 +231,15 @@ func CheckAndFixClientFiles(clientDirectory string, gameProfile GameProfile) err
 	}
 	wg.Wait()
 
+	if err := cleanupExtraFiles(manifest.Required, manifest.HardCheckingFolders, clientDirectory); err != nil {
+		return fmt.Errorf("Ошибка очистки лишних файлов: ", err)
+	}
+
 	saveCache()
 	if ctx.Err() != nil {
 		callback(0, 0, canceledStatus, nil)
-		fmt.Println("Загрузка отменена.")
 	} else {
 		callback(atomic.LoadInt64(&totalBytes), atomic.LoadInt64(&doneBytes), successStatus, nil)
-		fmt.Println("Все файлы загружены, проверены и синхронизированы.")
 	}
 
 	return nil

@@ -141,8 +141,14 @@ export default function DetailPage() {
                                                        аккаунт</Text>}><Text mt={"xs"} fz={"xs"} c={"dimmed"}>Для игры
                         на сервере требуется вход ⓘ</Text></Tooltip>}
 
-                    <Text style={{overflow: "visible"}} fz={"sm"}
-                          mt={rem(20)}>{getStatusText(gameState.status)}</Text>
+                    {[GameStatus.ERROR].includes(gameState.status)
+                        ?
+                        <Text style={{overflow: "visible"}} fz={"sm"}
+                              mt={rem(20)} c={"red"}>Ошибка: {getStatusText(gameState.status)}</Text>
+                        :
+                        <Text style={{overflow: "visible"}} fz={"sm"}
+                              mt={rem(20)}>{getStatusText(gameState.status)}</Text>
+                    }
 
                     {[GameStatus.DOWNLOADING].includes(gameState.status) &&
                         <>
@@ -165,7 +171,8 @@ export default function DetailPage() {
                 </div>
                 <GameProfileSettingsModal opened={settingsOpened} close={settingsModalHandlers.close}
                                           profile={gameProfilesState.profiles.at(Number(id) - 1)!}/>
-                <GameProfileOptionalFilesModal opened={optionalFilesSettingsOpened} close={optionalFilesModalHandlers.close}
+                <GameProfileOptionalFilesModal opened={optionalFilesSettingsOpened}
+                                               close={optionalFilesModalHandlers.close}
                                                profile={gameProfilesState.profiles.at(Number(id) - 1)!}/>
             </main>}
             {!gameProfilesState.retrieved && <Text mt={rem(100)} fz={"xl"}>Получаю игровые режимы...</Text>}
