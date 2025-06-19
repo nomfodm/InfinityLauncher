@@ -11,6 +11,11 @@ export default function PlayPage() {
     return (
         <AnimatedPage>
             <main className={styles.main}>
+                <div className={styles.blob_outer_container}>
+                    <div className={styles.blob_inner_container}>
+                        <div className={styles.blob}></div>
+                    </div>
+                </div>
                 <div className={styles.content}>
                     {gameProfiles.retrieved ?
                         gameProfiles.profiles.map((v, i) => {

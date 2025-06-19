@@ -1,7 +1,7 @@
 .main {
   height: 100vh;
-  background: linear-gradient(to bottom, #2e337f 0%, #090a19 59%);
-  background-attachment: fixed;
+  /*background: linear-gradient(to bottom, #2e337f 0%, #090a19 59%);*/
+  /*background-attachment: fixed;*/
 }
 
 .content {
@@ -14,4 +14,52 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 26px;
+}
+
+.blob_outer_container {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+  inset: 0;
+  margin: auto;
+  filter: blur(100px) opacity(0.5);
+}
+
+.blob_inner_container {
+  /*border-radius: 9999px;*/
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100vw;
+  height: 100vh;
+  min-width: 800px;
+  overflow: hidden;
+  /*background: #fff;*/
+  /*transform: scale(0.7);*/
+}
+
+.blob {
+  position: absolute;
+  width: 100vw;
+  height: 200vh;
+  inset: 0;
+  margin: auto;
+  background: conic-gradient(from 0deg, #483AA0, #7965C1, #0E2148, #E3D095);
+  animation: Gradient1 6s linear infinite;
+}
+
+@keyframes Gradient1 {
+  to {
+    transform: rotate(360deg)
+  }
+  /*0% {*/
+  /*  background-position: 0% 50%;*/
+  /*}*/
+  /*50% {*/
+  /*  background-position: 100% 50%;*/
+  /*}*/
+  /*100% {*/
+  /*  background-position: 0% 50%;*/
+  /*}*/
 }
