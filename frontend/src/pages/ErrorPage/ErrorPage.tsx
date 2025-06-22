@@ -37,7 +37,7 @@ export default function ErrorPage({error}: { error: string }) {
 
                 {error == errorList.at(1) &&
                     <Container>
-                        <Text fz={"h3"} c={"red"} fw={"bold"}>Не удалось подключить к серверам Infinity</Text>
+                        <Text fz={"h3"} c={"red"} fw={"bold"}>Не удалось подключиться к серверам Infinity</Text>
                         <Text mt={rem(40)}>Проверьте Ваше интернет-соединение или</Text>
                         <Text>попробуйте запустить лаунчер позже.</Text>
                     </Container>
