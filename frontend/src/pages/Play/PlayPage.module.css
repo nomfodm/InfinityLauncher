@@ -41,11 +41,11 @@
 
 .blob {
   position: absolute;
-  width: 100vw;
-  height: 200vh;
+  width: 200vw;
+  height: 400vh;
   inset: 0;
   margin: auto;
-  background: conic-gradient(from 0deg, #483AA0, #7965C1, #0E2148, #E3D095);
+  background: conic-gradient(from 60deg, #483AA0, #7965C1, #0E2148, #E3D095);
   animation: Gradient1 6s linear infinite;
 }
 
