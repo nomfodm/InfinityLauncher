@@ -4,12 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/fsnotify/fsnotify"
-	"github.com/google/uuid"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
-	"golang.org/x/sync/errgroup"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -17,6 +11,12 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/google/uuid"
+	"github.com/wailsapp/wails/v2/pkg/options"
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.org/x/sync/errgroup"
 )
 
 type App struct {
@@ -107,7 +107,7 @@ func (a *App) OpenDirectoryInExplorer(path string) error {
 func (a *App) GetOptionalFiles(profile GameProfile) ([]OptionalFileEntry, error) {
 	manifest, err := loadManifest(profile.Manifest.URL)
 	if err != nil {
-		return []OptionalFileEntry{}, fmt.Errorf("Ошибка загрузки манифеста: ", err)
+		return []OptionalFileEntry{}, fmt.Errorf("ошибка загрузки манифеста: %w", err)
 	}
 	return manifest.OptionalFiles, nil
 }
@@ -153,7 +153,7 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("не удалось инициализировать файловый watcher: %w", err)
 	}
 	defer watcher.Close()
 
@@ -164,10 +164,10 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 			select {
 			case <-cancelCtx.Done():
 				return nil
-			case event, _ := <-watcher.Events:
+			case event := <-watcher.Events:
 				cancel()
 				return fmt.Errorf("modified file: %s", event.Name)
-			case err, _ := <-watcher.Errors:
+			case err := <-watcher.Errors:
 				cancel()
 				return fmt.Errorf("error: %w", err)
 			}
@@ -223,7 +223,11 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 
 	wailsruntime.EventsEmit(a.ctx, "gameStarted")
 
-	errs.Go(cmd.Run)
+	errs.Go(func() error {
+		// По завершении процесса отменяем контекст, чтобы корректно завершить горутину watcher'а
+		defer cancel()
+		return cmd.Run()
+	})
 
 	return errs.Wait()
 }
