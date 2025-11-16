@@ -42,7 +42,7 @@ jobs:
         uses: dAppServer/wails-build-action@main
         id: build
         with:
-          wails-version: "v2.9.2"
+          wails-version: "v2.10.2"
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
           nsis: false
