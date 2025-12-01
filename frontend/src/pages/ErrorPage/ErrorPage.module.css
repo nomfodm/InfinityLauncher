@@ -1,0 +1,12 @@
+.logoContainer,
+.logoContainer * {
+  cursor: default;
+}
+
+.redOverlay {
+  /* Перекрашиваем второй логотип в красный */
+  filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%)
+    hue-rotate(331deg) brightness(104%) contrast(97%);
+  /* Накладываем цвет на оригинальный логотип */
+  mix-blend-mode: hue;
+}

@@ -1,31 +1,30 @@
 import AnimatedPage from "../../components/AnimatedPage/AnimatedPage";
 import styles from "./PlayPage.module.css";
 import GameProfileCard from "../../components/GameProfileCard/GameProfileCard";
-import {useAppSelector} from "../../store/hooks";
-import {Text} from "@mantine/core";
-
+import { useAppSelector } from "../../store/hooks";
+import { Box, rem, Text } from "@mantine/core";
 
 export default function PlayPage() {
-    const gameProfiles = useAppSelector(state => state.gameProfiles)
+  const gameProfiles = useAppSelector((state) => state.gameProfiles);
 
-    return (
-        <AnimatedPage>
-            <main className={styles.main}>
-                <div className={styles.blob_outer_container}>
-                    <div className={styles.blob_inner_container}>
-                        <div className={styles.blob}></div>
-                    </div>
-                </div>
-                <div className={styles.content}>
-                    {gameProfiles.retrieved ?
-                        gameProfiles.profiles.map((v, i) => {
-                            return <GameProfileCard key={i} profile={v}/>;
-                        })
-                        :
-                        <Text fz={"xl"} ta={"center"}>{gameProfiles.error}</Text>
-                    }
-                </div>
-            </main>
-        </AnimatedPage>
-    );
+  return (
+    <AnimatedPage>
+      <main className={styles.main}>
+        <Box mb={rem(20)} fz={"20px"} fw={500}>
+          <Text>Выберите режим</Text>
+        </Box>
+        <div className={styles.cards}>
+          {gameProfiles.retrieved ? (
+            gameProfiles.profiles.map((v, i) => (
+              <GameProfileCard key={i} profile={v} />
+            ))
+          ) : (
+            <Text fz={"xl"} ta={"center"}>
+              {gameProfiles.error}
+            </Text>
+          )}
+        </div>
+      </main>
+    </AnimatedPage>
+  );
 }

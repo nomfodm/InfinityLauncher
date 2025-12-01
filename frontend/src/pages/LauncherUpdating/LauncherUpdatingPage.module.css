@@ -1,4 +1,28 @@
 .main {
-    height: 100vh;
-    background: #090A19;
+  padding: 10px;
+  height: 380px;
+
+  position: relative;
+  pointer-events: all;
+}
+
+.logoContainer,
+.logoContainer * {
+  cursor: default;
+}
+
+.redOverlay {
+  /* Перекрашиваем второй логотип в красный */
+  filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%)
+    hue-rotate(331deg) brightness(104%) contrast(97%);
+  mix-blend-mode: hue;
+  transition: opacity 0.3s ease;
+}
+
+.greenOverlay {
+  /* Перекрашиваем логотип в зелёный */
+  filter: brightness(0) saturate(100%) invert(55%) sepia(69%) saturate(559%)
+    hue-rotate(75deg) brightness(95%) contrast(92%);
+  mix-blend-mode: hue;
+  transition: opacity 0.3s ease;
 }

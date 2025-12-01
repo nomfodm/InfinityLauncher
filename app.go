@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -153,7 +154,7 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return fmt.Errorf("не удалось инициализировать файловый watcher: %w", err)
+		log.Fatal(err)
 	}
 	defer watcher.Close()
 
@@ -223,11 +224,7 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 
 	wailsruntime.EventsEmit(a.ctx, "gameStarted")
 
-	errs.Go(func() error {
-		// По завершении процесса отменяем контекст, чтобы корректно завершить горутину watcher'а
-		defer cancel()
-		return cmd.Run()
-	})
+	errs.Go(cmd.Run)
 
 	return errs.Wait()
 }

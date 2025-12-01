@@ -1,0 +1,18 @@
+.main {
+  width: 600px;
+  height: 360px;
+  background-color: #2e2e2e;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.skin_container {
+  width: 135px;
+  height: 276px;
+
+  --wails-draggable: no-drag;
+}
+
+.skin_container canvas {
+  --wails-draggable: no-drag;
+}
