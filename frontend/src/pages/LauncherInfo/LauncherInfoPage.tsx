@@ -180,6 +180,7 @@ export default function LauncherInfoPage() {
                           width: rem(18),
                           height: rem(18),
                           marginTop: rem(1),
+                          cursor: "default",
                         }}
                         color={"yellow"}
                       />
@@ -207,6 +208,7 @@ export default function LauncherInfoPage() {
                           width: rem(18),
                           height: rem(18),
                           marginTop: rem(1),
+                          cursor: "default",
                         }}
                         color={"green"}
                       />
@@ -251,6 +253,7 @@ export default function LauncherInfoPage() {
                           width: rem(18),
                           height: rem(18),
                           marginTop: rem(1),
+                          cursor: "default",
                         }}
                         color={"red"}
                       />
@@ -276,6 +279,7 @@ export default function LauncherInfoPage() {
                           width: rem(18),
                           height: rem(18),
                           marginTop: rem(1),
+                          cursor: "default",
                         }}
                         color={"red"}
                       />

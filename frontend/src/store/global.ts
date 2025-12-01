@@ -3,11 +3,13 @@ import { createSlice } from "@reduxjs/toolkit";
 interface GlobalState {
   navbarHidden: boolean;
   isInitializing: boolean;
+  showedUpdateNotification: boolean;
 }
 
 const initialState: GlobalState = {
   navbarHidden: false,
   isInitializing: true,
+  showedUpdateNotification: false,
 };
 
 export const globalStateSlice = createSlice({
@@ -22,6 +24,9 @@ export const globalStateSlice = createSlice({
     },
     setInitialized: (state) => {
       state.isInitializing = false;
+    },
+    setUpdateNotificationShowed: (state) => {
+      state.showedUpdateNotification = true;
     },
   },
 });

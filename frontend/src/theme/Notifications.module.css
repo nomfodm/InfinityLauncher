@@ -1,3 +1,9 @@
-.root, .root * {
-    overflow: visible;
+.root,
+.root * {
+  overflow: visible;
+}
+
+.root {
+  background: #212529;
+  border-radius: 10px;
 }
