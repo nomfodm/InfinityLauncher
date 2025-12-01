@@ -26,8 +26,8 @@ export default function Start() {
 
         const isMandatoryUpdateAvailable = await IsMandatoryUpdateAvailable();
         if (isMandatoryUpdateAvailable) {
-          // setNeedsToUpdate(true);
-          // return;
+          setNeedsToUpdate(true);
+          return;
         }
 
         await authService.checkAuth();
