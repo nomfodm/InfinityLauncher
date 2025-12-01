@@ -72,6 +72,7 @@ export default function GameProfileCard({ profile }: { profile: GameProfile }) {
                   position="bottom"
                   withArrow
                   color="gray.8"
+                  radius={rem(7)}
                 >
                   <Box
                     onClick={(e) => {
