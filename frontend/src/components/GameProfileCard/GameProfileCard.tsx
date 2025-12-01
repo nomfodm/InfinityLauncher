@@ -2,7 +2,7 @@ import styles from "./GameProfileCard.module.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { main, types } from "../../wailsjs/go/models";
-import { Box, Loader, Text } from "@mantine/core";
+import { Box, Loader, rem, Text, Tooltip } from "@mantine/core";
 import { useAppSelector } from "../../store/hooks";
 import GameProfile = main.GameProfile;
 import { IconDeviceGamepad2 } from "@tabler/icons-react";
@@ -17,21 +17,23 @@ export default function GameProfileCard({ profile }: { profile: GameProfile }) {
   const navigate = useNavigate();
   const gameState = useAppSelector((state) => state.game);
 
-  useEffect(() => {
-    async function wrapper() {
-      try {
-        const response = await PingMinecraftServer(
-          profile.minecraftServer.ip,
-          profile.minecraftServer.port
-        );
-        setMcserverPingResp(response);
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setIsPinging(false);
-      }
+  async function pingServer() {
+    try {
+      setIsPinging(true);
+      const response = await PingMinecraftServer(
+        profile.minecraftServer.ip,
+        profile.minecraftServer.port
+      );
+      setMcserverPingResp(response);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsPinging(false);
     }
-    wrapper();
+  }
+
+  useEffect(() => {
+    pingServer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -65,9 +67,24 @@ export default function GameProfileCard({ profile }: { profile: GameProfile }) {
                   {`${mcserverPingResp.PlayerCount.Online} / ${mcserverPingResp.PlayerCount.Max}`}
                 </Text>
               ) : (
-                <Text fz={"13px"} fw={500} c="red.6">
-                  Оффлайн
-                </Text>
+                <Tooltip
+                  label="Нажмите для проверки"
+                  position="bottom"
+                  withArrow
+                  color="gray.8"
+                >
+                  <Box
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      pingServer();
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <Text fz={"13px"} fw={500} c="red.6">
+                      Оффлайн
+                    </Text>
+                  </Box>
+                </Tooltip>
               )}
             </Box>
           )}
@@ -79,15 +96,20 @@ export default function GameProfileCard({ profile }: { profile: GameProfile }) {
         GameStatus.PREPARING,
       ].includes(gameState.status) &&
         gameState.clientPlayingID === profile.id && (
-          <Loader className={styles.loader} color="white" />
+          <Loader size={rem(25)} className={styles.loader} color="white" />
         )}
       {[GameStatus.ERROR].includes(gameState.status) &&
         gameState.clientPlayingID === profile.id && (
-          <Loader className={styles.loader} color="red" />
+          <Loader size={rem(25)} className={styles.loader} color="red" />
         )}
       {[GameStatus.PLAYING].includes(gameState.status) &&
         gameState.clientPlayingID === profile.id && (
-          <IconDeviceGamepad2 className={styles.loader} color={"white"} />
+          <IconDeviceGamepad2
+            width={25}
+            height={25}
+            className={styles.loader}
+            color={"white"}
+          />
         )}
       <section className={styles.title}>
         <span>
