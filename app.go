@@ -224,7 +224,11 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 
 	wailsruntime.EventsEmit(a.ctx, "gameStarted")
 
-	errs.Go(cmd.Run)
+	errs.Go(func() error {
+		err := cmd.Run()
+		cancel()
+		return err
+	})
 
 	return errs.Wait()
 }
