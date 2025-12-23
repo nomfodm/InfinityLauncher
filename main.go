@@ -39,6 +39,7 @@ func main() {
 		},
 		OnStartup:  app.startup,
 		OnDomReady: app.domready,
+		OnShutdown: app.shutdown,
 		Bind: []interface{}{
 			app,
 			auth,

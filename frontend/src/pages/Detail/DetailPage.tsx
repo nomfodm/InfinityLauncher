@@ -76,6 +76,9 @@ export default function DetailPage() {
   const [checkedList, setCheckedList] = useState<{ [p: string]: boolean }>({});
   const [filesList, setFilesList] = useState<OptionalFileEntry[]>([]);
 
+  const [optionalFilesChecking, setOptionalFilesChecking] =
+    useState<boolean>(true);
+
   useEffect(() => {
     async function wrapper() {
       await InitGameProfileConfig(
@@ -215,7 +218,7 @@ export default function DetailPage() {
       gameProfilesState.profiles.at(Number(id) - 1)!.id
     );
     const files = await GetOptionalFiles(
-                gameProfilesState.profiles.at(Number(id) - 1)!
+      gameProfilesState.profiles.at(Number(id) - 1)!
     );
 
     if (!config.optionalFilesEnabled) {
@@ -231,6 +234,8 @@ export default function DetailPage() {
 
     setCheckedList(config.optionalFilesEnabled);
     setFilesList(files);
+    setOptionalFilesChecking(false);
+    console.log(files);
 
     await WriteGameProfileConfig(
       gameProfilesState.profiles.at(Number(id) - 1)!.id,
@@ -304,8 +309,8 @@ export default function DetailPage() {
 
             <Text fz={"15px"} c={"#969696"} mt={rem(30)}>
               Папка с файлами игры
-              </Text>
-              <Text
+            </Text>
+            <Text
               style={{ overflowX: "auto" }}
               w={rem(400)}
               mt={rem(5)}
@@ -500,16 +505,20 @@ export default function DetailPage() {
                     >
                       <IconSettings width={20} height={20} />
                     </Button>
-                    <Button
-                      w={rem(40)}
-                      onClick={() =>
-                        setContentType(CurrentContentType.OptionalFiles)
-                      }
-                      color={"dark.4"}
-                      className={styles.settings_btn}
-                    >
-                      <IconEdit width={20} height={20} />
-                    </Button>
+                    {(filesList.length > 0 || optionalFilesChecking) && (
+                      <Button
+                        w={rem(40)}
+                        onClick={() =>
+                          setContentType(CurrentContentType.OptionalFiles)
+                        }
+                        loading={optionalFilesChecking}
+                        disabled={optionalFilesChecking}
+                        color={"dark.4"}
+                        className={styles.settings_btn}
+                      >
+                        <IconEdit width={20} height={20} />
+                      </Button>
+                    )}
                   </>
                 )}
               </section>

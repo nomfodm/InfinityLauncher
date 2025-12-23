@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
@@ -21,7 +22,9 @@ import (
 )
 
 type App struct {
-	ctx context.Context
+	ctx         context.Context
+	gameProcess *os.Process
+	gameCancel  context.CancelFunc
 }
 
 var (
@@ -220,12 +223,27 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 
 	cmd := exec.CommandContext(cancelCtx, strings.ReplaceAll(commandRaw[0], "{executablePath}", runtimeExecutablePath), command...)
 	cmd.Dir = gameClientConfig.Path
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if runtime.GOOS == "windows" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			CreationFlags: 0x08000000, // CREATE_NO_WINDOW - скрывает консоль, но не GUI окна
+		}
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	a.gameProcess = cmd.Process
+	a.gameCancel = cancel
 
 	wailsruntime.EventsEmit(a.ctx, "gameStarted")
 
 	errs.Go(func() error {
-		err := cmd.Run()
+		err := cmd.Wait()
+		a.gameProcess = nil
+		a.gameCancel = nil
 		cancel()
 		return err
 	})
@@ -282,9 +300,19 @@ func (a *App) StartGameWithoutAccount(profile GameProfile) error {
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	a.gameProcess = cmd.Process
+	a.gameCancel = cancel
+
 	wailsruntime.EventsEmit(a.ctx, "gameStarted")
 
-	return cmd.Run()
+	err = cmd.Wait()
+	a.gameProcess = nil
+	a.gameCancel = nil
+	return err
 }
 
 func (a *App) IsMandatoryUpdateAvailable() (bool, error) {
@@ -309,4 +337,29 @@ func (a *App) RestartApp() error {
 
 func (a *App) GetVersion() string {
 	return GetLauncherVersion()
+}
+
+func (a *App) shutdown(ctx context.Context) {
+	// При закрытии лаунчера завершаем процесс игры
+	if a.gameProcess != nil {
+		// Сначала пытаемся корректно завершить процесс
+		if runtime.GOOS == "windows" {
+			// На Windows используем TerminateProcess
+			a.gameProcess.Kill()
+		} else {
+			// На других ОС отправляем SIGTERM
+			a.gameProcess.Signal(os.Interrupt)
+			// Даем процессу время на корректное завершение
+			time.Sleep(2 * time.Second)
+			// Если процесс еще работает, принудительно завершаем
+			if a.gameProcess != nil {
+				a.gameProcess.Kill()
+			}
+		}
+		a.gameProcess = nil
+	}
+	if a.gameCancel != nil {
+		a.gameCancel()
+		a.gameCancel = nil
+	}
 }
