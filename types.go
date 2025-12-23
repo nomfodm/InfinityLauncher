@@ -48,6 +48,11 @@ type FileManifest struct {
 	HardCheckingFolders        []string                         `json:"hardCheckingFolders"`
 	NonVerifiable              []FileEntry                      `json:"nonVerifiable"`
 	OptionalFiles              []OptionalFileEntry              `json:"optionalFiles"`
+	RunProperties              RunProperties                    `json:"runProperties"`
+}
+
+type RunProperties struct {
+	RuntimePath string `json:"runtimePath"`
 }
 
 type NonStrictVerifiableFolderEntry struct {

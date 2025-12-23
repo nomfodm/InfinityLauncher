@@ -100,9 +100,12 @@ export default function UserPage() {
                 <Text fz={"20px"} fw={400}>
                   {auth.user?.username}
                 </Text>
-                <Text fz={"20px"} fw={400} c={"#6C6C6C"}>
-                  {auth.user?.minecraftCredential.username}
-                </Text>
+                {auth.user?.username !=
+                  auth.user?.minecraftCredential.username && (
+                  <Text fz={"20px"} fw={400} c={"#6C6C6C"}>
+                    {auth.user?.minecraftCredential.username}
+                  </Text>
+                )}
               </Flex>
               <Box mt={rem(25)}>
                 <Anchor

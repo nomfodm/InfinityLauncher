@@ -197,7 +197,7 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 		return err
 	}
 
-	runtimeExecutablePath := filepath.Join("runtime", "java-runtime-gamma", "bin", "java.exe")
+	runtimeExecutablePath := manifest.RunProperties.RuntimePath
 	nativesPath := filepath.Join(gameClientConfig.Path, "natives")
 
 	var command []string
