@@ -264,7 +264,12 @@ func (a *App) StartGameWithoutAccount(profile GameProfile) error {
 		return err
 	}
 
-	runtimeExecutablePath := filepath.Join("runtime", "java-runtime-gamma", "bin", "java.exe")
+	manifest, err := loadManifest(profile.Manifest.URL)
+	if err != nil {
+		return err
+	}
+
+	runtimeExecutablePath := manifest.RunProperties.RuntimePath
 	nativesPath := filepath.Join(gameClientConfig.Path, "natives")
 
 	letterBytes := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -282,7 +287,7 @@ func (a *App) StartGameWithoutAccount(profile GameProfile) error {
 		stringToAdd = strings.ReplaceAll(stringToAdd, "{clientFolderPath}", gameClientConfig.Path)
 		stringToAdd = strings.ReplaceAll(stringToAdd, "{username}", string(b))
 		stringToAdd = strings.ReplaceAll(stringToAdd, "{uuid}", uuid.NewString())
-		stringToAdd = strings.ReplaceAll(stringToAdd, "{token}", "")
+		stringToAdd = strings.ReplaceAll(stringToAdd, "{token}", "netaccesstokena)netaccesstokena)")
 		command = append(command, stringToAdd)
 	}
 
@@ -298,7 +303,13 @@ func (a *App) StartGameWithoutAccount(profile GameProfile) error {
 
 	cmd.Dir = gameClientConfig.Path
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if runtime.GOOS == "windows" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			CreationFlags: 0x08000000, // CREATE_NO_WINDOW - скрывает консоль, но не GUI окна
+		}
+	}
 
 	err = cmd.Start()
 	if err != nil {
