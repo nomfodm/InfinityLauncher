@@ -19,15 +19,15 @@ export default function Start() {
 
   useEffect(() => {
     async function wrapper() {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       try {
         await Init();
 
         const isMandatoryUpdateAvailable = await IsMandatoryUpdateAvailable();
         if (isMandatoryUpdateAvailable) {
-          setNeedsToUpdate(true);
-          return;
+          // setNeedsToUpdate(true);
+          // return;
         }
 
         await authService.checkAuth();

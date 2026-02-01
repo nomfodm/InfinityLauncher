@@ -161,6 +161,31 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 	}
 	defer watcher.Close()
 
+	manifest, err := loadManifest(profile.Manifest.URL)
+	if err != nil {
+		return err
+	}
+
+	ignorePaths := make([]string, 0, len(manifest.FileWatcherIngore))
+	for _, ignoreFolder := range manifest.FileWatcherIngore {
+		ignorePath := filepath.Join(gameClientConfig.Path, ignoreFolder)
+		ignorePaths = append(ignorePaths, ignorePath)
+	}
+
+	shouldIgnore := func(path string) bool {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return false
+		}
+		for _, ignorePath := range ignorePaths {
+			rel, err := filepath.Rel(ignorePath, absPath)
+			if err == nil && (rel == "." || !strings.HasPrefix(rel, "..")) {
+				return true
+			}
+		}
+		return false
+	}
+
 	errs, _ := errgroup.WithContext(cancelCtx)
 
 	errs.Go(func() error {
@@ -169,8 +194,11 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 			case <-cancelCtx.Done():
 				return nil
 			case event := <-watcher.Events:
-				cancel()
-				return fmt.Errorf("modified file: %s", event.Name)
+				fmt.Println(event.Name)
+				if !shouldIgnore(event.Name) {
+					cancel()
+					return fmt.Errorf("modified file: %s", event.Name)
+				}
 			case err := <-watcher.Errors:
 				cancel()
 				return fmt.Errorf("error: %w", err)
@@ -178,12 +206,12 @@ func (a *App) StartGame(profile GameProfile, accessToken string) error {
 		}
 	})
 
-	manifest, err := loadManifest(profile.Manifest.URL)
-	if err != nil {
-		return err
-	}
 	for _, folder := range manifest.HardCheckingFolders {
 		folderPath := filepath.Join(gameClientConfig.Path, folder)
+		// Пропускаем папки, которые должны быть проигнорированы
+		if shouldIgnore(folderPath) {
+			continue
+		}
 		err = watcher.Add(folderPath)
 		if err != nil {
 			return err

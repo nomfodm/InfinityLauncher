@@ -49,6 +49,7 @@ type FileManifest struct {
 	NonVerifiable              []FileEntry                      `json:"nonVerifiable"`
 	OptionalFiles              []OptionalFileEntry              `json:"optionalFiles"`
 	RunProperties              RunProperties                    `json:"runProperties"`
+	FileWatcherIngore          []string                         `json:"fileWatcherIgnore"`
 }
 
 type RunProperties struct {
