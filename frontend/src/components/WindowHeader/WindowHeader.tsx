@@ -46,7 +46,7 @@ export default function WindowHeader() {
   const [version, setVersion] = useState("0.0.0");
   const navigate = useNavigate();
   const isInitializing = useAppSelector(
-    (state) => state.globalState.isInitializing
+    (state) => state.globalState.isInitializing,
   );
 
   useEffect(() => {
@@ -60,6 +60,7 @@ export default function WindowHeader() {
   const pathname = location.pathname;
 
   function handleNavigate() {
+    console.log(1);
     if (isInitializing) return;
     navigate("/launcherinfo");
   }

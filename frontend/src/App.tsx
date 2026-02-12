@@ -20,10 +20,11 @@ import { IconAlertHexagon } from "@tabler/icons-react";
 import { IsAnyUpdateAvailable } from "./wailsjs/go/main/App";
 import store from "./store";
 import { globalStateActions } from "./store/global";
+import styles from "./App.module.css";
 
 function Layout() {
   const navbarHidden = useAppSelector(
-    (state) => state.globalState.navbarHidden
+    (state) => state.globalState.navbarHidden,
   );
 
   return (
@@ -31,10 +32,16 @@ function Layout() {
       gap={rem(10)}
       p={rem(10)}
       justify={navbarHidden ? "center" : "flex-start"}
+      className={styles.main}
     >
       <Navbar />
       <Box style={{ overflow: "visible" }}>
         <Outlet />
+      </Box>
+      <Box className={styles.blob_outer_container}>
+        <Box className={styles.blob_inner_container}>
+          <Box className={styles.blob}></Box>
+        </Box>
       </Box>
     </Flex>
   );
@@ -70,7 +77,7 @@ function App() {
   const location = useLocation();
 
   const showedNotification = useAppSelector(
-    (state) => state.globalState.showedUpdateNotification
+    (state) => state.globalState.showedUpdateNotification,
   );
   const navigate = useNavigate();
 

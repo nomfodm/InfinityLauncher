@@ -35,7 +35,7 @@ export default function LauncherInfoPage() {
 
   const [version, setVersion] = useState("v0.0.0");
   const [status, setStatus] = useState<UpdateFlowStatus>(
-    UpdateFlowStatus.CHECKING
+    UpdateFlowStatus.CHECKING,
   );
 
   const [countdown, setCountdown] = useState(5);
