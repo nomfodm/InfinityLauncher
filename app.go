@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
@@ -378,27 +377,21 @@ func (a *App) GetVersion() string {
 	return GetLauncherVersion()
 }
 
-func (a *App) shutdown(ctx context.Context) {
-	// При закрытии лаунчера завершаем процесс игры
-	if a.gameProcess != nil {
-		// Сначала пытаемся корректно завершить процесс
-		if runtime.GOOS == "windows" {
-			// На Windows используем TerminateProcess
-			a.gameProcess.Kill()
-		} else {
-			// На других ОС отправляем SIGTERM
-			a.gameProcess.Signal(os.Interrupt)
-			// Даем процессу время на корректное завершение
-			time.Sleep(2 * time.Second)
-			// Если процесс еще работает, принудительно завершаем
-			if a.gameProcess != nil {
-				a.gameProcess.Kill()
-			}
-		}
-		a.gameProcess = nil
-	}
-	if a.gameCancel != nil {
-		a.gameCancel()
-		a.gameCancel = nil
-	}
-}
+// func (a *App) shutdown(ctx context.Context) {
+// 	if a.gameProcess != nil {
+// 		if runtime.GOOS == "windows" {
+// 			a.gameProcess.Kill()
+// 		} else {
+// 			a.gameProcess.Signal(os.Interrupt)
+// 			time.Sleep(2 * time.Second)
+// 			if a.gameProcess != nil {
+// 				a.gameProcess.Kill()
+// 			}
+// 		}
+// 		a.gameProcess = nil
+// 	}
+// 	if a.gameCancel != nil {
+// 		a.gameCancel()
+// 		a.gameCancel = nil
+// 	}
+// }
